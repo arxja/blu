@@ -72,8 +72,8 @@ export default defineConfig({
 
   resolve: {
     alias: {
-      "next/router": "<rootDir>/src/__mocks__/next/router.ts",
-      "next/navigation": "<rootDir>/src/__mocks__/next/navigation.ts",
+      "next/router": fileURLToPath(new URL("./src/__mocks__/next/router.ts", import.meta.url)),
+      "next/navigation": fileURLToPath(new URL("./src/__mocks__/next/navigation.ts", import.meta.url)),
     },
   },
 });
