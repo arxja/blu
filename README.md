@@ -4,13 +4,13 @@
 
 ## Key features that im looking for:
 
-[] Multi-tenant architecture (enterprise pattern)
-[] Real-time analytics dashboard
-[] Stripe webhook handling
-[] Internationalization
-[] Infinite scroll with cursor pagination
-[] Performance optimized (SSR/ISR)
-[] Production logging & monitoring
-[] Security best practices
-[] Rate limiting & bot protection
-[] A/B testing framework
+- [ ] Multi-tenant architecture (enterprise pattern)
+- [ ] Real-time analytics dashboard
+- [ ] Stripe webhook handling
+- [ ] Internationalization
+- [ ] Infinite scroll with cursor pagination
+- [ ] Performance optimized (SSR/ISR)
+- [ ] Production logging & monitoring
+- [ ] Security best practices
+- [ ] Rate limiting & bot protection
+- [ ] A/B testing framework
