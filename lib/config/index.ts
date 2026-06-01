@@ -18,8 +18,6 @@ const serverSchema = z.object({
   REDIS_URL: z.string().url().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-
-  // Runtime config
   NODE_ENV: z.enum(["development", "staging", "production"]),
   APP_URL: z.string().url(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]),
@@ -37,38 +35,41 @@ const clientSchema = z.object({
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
 });
 
-function validateConfig() {
-  const isServer = typeof window === "undefined";
+// Export types
+export type ServerConfig = z.infer<typeof serverSchema>;
+export type ClientConfig = z.infer<typeof clientSchema>;
+
+// Server-only config getter
+export function getServerConfig(): ServerConfig {
+  if (typeof window !== "undefined") {
+    throw new Error(
+      "❌ getServerConfig() called on client! Server config must not be imported in client components.",
+    );
+  }
 
   try {
-    if (isServer) {
-      const serverConfig = serverSchema.parse(process.env);
-      const clientConfig = clientSchema.parse(process.env);
+    const serverConfig = serverSchema.parse(process.env);
 
-      // Security
-      if (process.env.NODE_ENV === "production") {
-        const requiredKeys = [
-          "DATABASE_URL",
-          "JWT_SECRET",
-          "STRIPE_SECRET_KEY",
-        ] as const;
+    // Production security check
+    if (process.env.NODE_ENV === "production") {
+      const requiredKeys = [
+        "DATABASE_URL",
+        "JWT_SECRET",
+        "STRIPE_SECRET_KEY",
+      ] as const;
 
-        const missingRequired = requiredKeys.filter((key) => !process.env[key]);
+      const missingRequired = requiredKeys.filter((key) => !process.env[key]);
 
-        if (missingRequired.length > 0) {
-          console.error(
-            "❌ Missing required environment variables:",
-            missingRequired,
-          );
-          process.exit(1);
-        }
+      if (missingRequired.length > 0) {
+        console.error(
+          "❌ Missing required environment variables:",
+          missingRequired,
+        );
+        process.exit(1);
       }
-
-      return { ...serverConfig, ...clientConfig };
-    } else {
-      // Client-side
-      return clientSchema.parse(process.env);
     }
+
+    return serverConfig;
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error("❌ Environment validation failed:", error.issues);
@@ -78,6 +79,21 @@ function validateConfig() {
   }
 }
 
-export const config = validateConfig();
-export type ServerConfig = z.infer<typeof serverSchema>;
-export type ClientConfig = z.infer<typeof clientSchema>;
+// Client-safe config getter
+export function getClientConfig(): ClientConfig {
+  try {
+    return clientSchema.parse(
+      typeof window === "undefined"
+        ? process.env
+        : window.__NEXT_DATA__?.props?.pageProps,
+    );
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("❌ Client environment validation failed:", error.issues);
+    }
+    throw error;
+  }
+}
+
+export const serverConfig = getServerConfig();
+export const clientConfig = getClientConfig();
