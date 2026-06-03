@@ -13,7 +13,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:changed": "vitest --related --watch",
-    "test:debug": "vitest --inspect-brk --no-file-parallelism"
+    "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "seed": "bun run scripts/seed/index.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -37,6 +38,7 @@
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/coverage-v8": "^4.1.7",
     "@vitest/ui": "^4.1.7",
+    "bcryptjs": "^3.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "jsdom": "^29.1.1",
