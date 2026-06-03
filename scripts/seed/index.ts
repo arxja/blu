@@ -7,7 +7,7 @@ import seedReports from "./reports";
 import seedInvitations from "./invitations";
 import seedTenants from "./tenants";
 import seedEvents from "./events";
-import { serverConfig } from "`@/lib/config`";
+import { serverConfig } from "@/lib/config";
 
 async function seed() {
   try {
