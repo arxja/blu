@@ -78,7 +78,7 @@ pnpm run seed
 
 ### Main Module: `index.ts`
 
-The entry pint that orchestrates all seeding operations
+The entry point that orchestrates all seeding operations
 
 Export: None (runs directly)
 
