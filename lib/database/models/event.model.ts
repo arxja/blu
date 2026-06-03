@@ -7,7 +7,7 @@ export interface IEvent extends mongoose.Document {
   anonymousId?: string;
   sessionId?: string;
   eventName: string;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   timestamp: Date;
   ingestedAt: Date;
   ip?: string;

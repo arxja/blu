@@ -20,9 +20,10 @@ if (!global.mongooseCache) {
   global.mongooseCache = cached;
 }
 
-const MONGODB_URI = serverConfig.DATABASE_URL!;
-
-if (!MONGODB_URI) throw  AppError.notFound("Please define MONGODB_URI environment variable");
+const MONGODB_URI = serverConfig.DATABASE_URL;
+if (!MONGODB_URI) {
+  throw new AppError("Please define DATABASE_URL environment variable", 500);
+}
 
 export async function connectDB(): Promise<mongoose.Connection> {
   if (cached.conn) {

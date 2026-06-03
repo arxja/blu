@@ -45,7 +45,8 @@ export function generateRandomEvents(
     for (let j = 0; j < eventsPerDay; j++) {
       const hour = Math.floor(Math.random() * 24);
       const minute = Math.floor(Math.random() * 60);
-      date.setHours(hour, minute);
+      const eventDate = new Date(date);
+      eventDate.setHours(hour, minute, 0, 0);
 
       const eventName =
         eventNames[Math.floor(Math.random() * eventNames.length)];
@@ -68,7 +69,7 @@ export function generateRandomEvents(
             Math.floor(Math.random() * 3)
           ],
         },
-        timestamp: date,
+        timestamp: eventDate,
         ingestedAt: new Date(),
         ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
         userAgent: "Mozilla/5.0 (Macintosh)",
