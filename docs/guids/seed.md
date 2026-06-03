@@ -323,11 +323,11 @@ After seeding, use these credentials to log in:
 
 | Email                | Password | Role    | Tenant   | Subdomain            |
 | -------------------- | -------- | ------- | -------- | -------------------- |
-| ceo@acme.com         | Test123! | owner   | Acme     | acme.saasify.com     |
-| analyst@acme.com     | Test123! | analyst | Acme     | acme.saasify.com     |
-| viewer@acme.com      | Test123! | viewer  | Acme     | acme.saasify.com     |
-| founder@startupx.com | Test123! | owner   | StartupX | startupx.saasify.com |
-| admin@beta.io        | Test123! | admin   | Beta Inc | beta.saasify.com     |
+| ceo@acme.com         | Test123! | owner   | Acme     | acme.localhost:3000     |
+| analyst@acme.com     | Test123! | analyst | Acme     | acme.localhost:3000     |
+| viewer@acme.com      | Test123! | viewer  | Acme     | acme.localhost:3000     |
+| founder@startupx.com | Test123! | owner   | StartupX | startupx.localhost:3000 |
+| admin@beta.io        | Test123! | admin   | Beta Inc | beta.localhost:3000     |
 
 ### API Keys (For Testing)
 
