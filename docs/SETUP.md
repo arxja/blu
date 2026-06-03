@@ -4,6 +4,7 @@
 
 - Node.js v22+
 - pnpm v11
+- Bun (for executing some of the scripts)
 
 ## Quick Start
 
