@@ -7,9 +7,13 @@ import seedReports from "./reports";
 import seedInvitations from "./invitations";
 import seedTenants from "./tenants";
 import seedEvents from "./events";
+import { serverConfig } from "`@/lib/config`";
 
 async function seed() {
   try {
+    if (serverConfig.NODE_ENV !== "development") {
+      throw new Error("Seeding is only allowed in development environment.");
+    }
     await connectDB();
     console.log("📦 Starting database seed...\n");
 
@@ -26,7 +30,8 @@ async function seed() {
     await seedInvitations(tenants, users);
 
     console.log("\n🎉 SEED COMPLETED SUCCESSFULLY!");
-    console.log("\n🔐 Test Logins (password: Test123!):");
+    console.log("\n🔐 Test Logins:");
+    console.log("   (Use the seeded default password from local setup docs)");
     console.log("   Acme CEO:     ceo@acme.com");
     console.log("   Acme Analyst: analyst@acme.com");
     console.log("   Acme Viewer:  viewer@acme.com");

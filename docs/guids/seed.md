@@ -135,7 +135,7 @@ Exports: `default function seedTenants(): Promise<ITenant[]>`
 | ---------------- | ---------- | -------- | --------- |
 | Acme Corporation | Pro        | Active   | acme      |
 | StartupX         | Free       | Active   | startupx  |
-| Beta Inc         | Enterprise | Trailing | beta      |
+| Beta Inc         | Enterprise | Trialing | beta      |
 
 ### Users Module: `users.ts`
 
