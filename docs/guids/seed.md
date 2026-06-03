@@ -56,9 +56,9 @@ net start MongoDB                       # Windows
 ## Installation
 
 ```bash
-# Install dependencies
-pnpm add mongoose bcryptjs
-pnpm add -D @types/bcryptjs @types/node tsx
+# Dependencies are already configured in package.json
+# Just run:
+pnpm install
 
 # Run seed
 pnpm run seed
