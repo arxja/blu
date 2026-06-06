@@ -1,10 +1,8 @@
 import mongoose, { Schema, models, model, Document } from "mongoose";
 
 export interface IDashboardUser extends Document {
-  tenantId: mongoose.Types.ObjectId;
   email: string;
   name: string;
-  role: "owner" | "admin" | "analyst" | "viewer";
   passwordHash: string;
   isActive: boolean;
   lastLoginAt?: Date;
@@ -14,14 +12,8 @@ export interface IDashboardUser extends Document {
 
 const DashboardUserSchema = new Schema<IDashboardUser>(
   {
-    tenantId: { type: Schema.Types.ObjectId, required: true, ref: "Tenant" },
     email: { type: String, required: true, lowercase: true },
     name: { type: String, required: true },
-    role: {
-      type: String,
-      enum: ["owner", "admin", "analyst", "viewer"],
-      default: "viewer",
-    },
     passwordHash: { type: String, required: true },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
