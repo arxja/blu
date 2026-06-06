@@ -15,7 +15,9 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
+  User,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
@@ -24,6 +26,7 @@ export const SignUpForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -44,7 +47,7 @@ export const SignUpForm = () => {
     const { confirmPassword, ...signUpData } = data;
 
     try {
-      const response = await fetch("/api/auth/sign-up", {
+      const response = await fetch("/api/sign-up", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -58,9 +61,10 @@ export const SignUpForm = () => {
         throw new Error(result.message || "Failed to sign up");
       }
 
-      // Handle successful sign-up (e.g., redirect to sign-in)
-      console.log("Sign up successful:", result);
-      // redirect here
+      localStorage.setItem("auth_token", result.token);
+      localStorage.setItem("auth_user", JSON.stringify(result.user));
+
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -81,7 +85,6 @@ export const SignUpForm = () => {
 
   const passwordStrength = getPasswordStrength();
 
-  // Define strength configuration
   const getStrengthConfig = (strength: number) => {
     switch (strength) {
       case 1:
@@ -127,6 +130,31 @@ export const SignUpForm = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <div>
+        <label
+          htmlFor="name"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
+          Full Name
+        </label>
+        <div className="relative">
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+          <input
+            {...register("name")}
+            type="text"
+            id="name"
+            placeholder="John Doe"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+            disabled={isLoading}
+          />
+        </div>
+        {errors.name && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {errors.name.message}
+          </p>
+        )}
+      </div>
+
       <div>
         <label
           htmlFor="email"
@@ -187,7 +215,6 @@ export const SignUpForm = () => {
           </p>
         )}
 
-        {/* Password strength indicator */}
         {password && (
           <div className="mt-2 space-y-2">
             <div className="flex gap-1">

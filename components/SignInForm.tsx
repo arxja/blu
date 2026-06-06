@@ -7,6 +7,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signInSchema } from "@/lib/validations";
 import { Mail, Lock, LogIn, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
@@ -14,6 +15,7 @@ export const SignInForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -28,7 +30,7 @@ export const SignInForm = () => {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/sign-in", {
+      const response = await fetch("/api/sign-in", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -42,9 +44,10 @@ export const SignInForm = () => {
         throw new Error(result.message || "Failed to sign in");
       }
 
-      // Handle successful sign-in (e.g., redirect, store token, etc.)
-      console.log("Sign in successful:", result);
-      // redirect here
+      localStorage.setItem("auth_token", result.token);
+      localStorage.setItem("auth_user", JSON.stringify(result.user));
+
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
