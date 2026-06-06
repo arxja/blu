@@ -12,7 +12,7 @@ dotenv.config({ path: envFile });
 
 const serverSchema = z.object({
   // Server-only
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string(),
   JWT_SECRET: z.string().min(32),
   STRIPE_SECRET_KEY: z.string().startsWith("sk_"),
   REDIS_URL: z.string().url().optional(),
