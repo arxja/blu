@@ -74,12 +74,22 @@ export async function POST(req: NextRequest) {
 
     const token = signJWT({ userId: user._id.toString(), email: user.email });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
-      token,
+      token, // ! still include for client localStorage
       user: { id: user._id, email: user.email, name: user.name },
       workspaces,
     });
+
+    response.cookies.set("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Signin error:", error);
     return NextResponse.json(
@@ -88,4 +98,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
