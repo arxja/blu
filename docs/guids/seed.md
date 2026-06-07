@@ -1,5 +1,7 @@
 # Seed System Documentation
 
+<!-- ToDo: sync with new simplified version -->
+
 > The seed system populates your database with initial test data for development and testing purposes. It creates tenants, users, events, dashboards, reports, and invitations.
 
 ## File Structure

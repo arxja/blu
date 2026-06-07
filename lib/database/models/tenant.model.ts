@@ -3,6 +3,7 @@ import mongoose, { Schema, models, model } from "mongoose";
 export interface ITenant extends mongoose.Document {
   companyName: string;
   subdomain: string;
+  ownerId: mongoose.Types.ObjectId;
   plan: "free" | "pro" | "enterprise";
   status: "active" | "trialing" | "past_due" | "suspended";
   billingEmail: string;
@@ -22,6 +23,11 @@ const TenantSchema = new Schema<ITenant>(
   {
     companyName: { type: String, required: true },
     subdomain: { type: String, required: true, unique: true, lowercase: true },
+    ownerId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "DashboardUser",
+    },
     plan: {
       type: String,
       enum: ["free", "pro", "enterprise"],
@@ -47,6 +53,7 @@ const TenantSchema = new Schema<ITenant>(
 
 // Indexes
 TenantSchema.index({ subdomain: 1 }, { unique: true });
+TenantSchema.index({ ownerId: 1 });
 TenantSchema.index({ stripeCustomerId: 1 });
 
 export default models.Tenant || model<ITenant>("Tenant", TenantSchema);
