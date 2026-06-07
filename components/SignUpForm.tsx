@@ -18,15 +18,16 @@ import {
   User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export const SignUpForm = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const { signUp, isLoading } = useAuth();
 
   const {
     register,
@@ -40,35 +41,25 @@ export const SignUpForm = () => {
   const password = watch("password");
 
   const onSubmit = async (data: SignUpFormData) => {
-    setIsLoading(true);
     setError(null);
 
-    // Remove confirmPassword before sending to API
     const { confirmPassword, ...signUpData } = data;
 
     try {
-      const response = await fetch("/api/sign-up", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(signUpData),
-      });
+      const result = await signUp(
+        signUpData.name,
+        signUpData.email,
+        signUpData.password,
+      );
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to sign up");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to sign up");
       }
 
-      localStorage.setItem("auth_token", result.token);
-      localStorage.setItem("auth_user", JSON.stringify(result.user));
-
       router.push("/dashboard");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
     }
   };
 
