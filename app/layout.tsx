@@ -4,7 +4,7 @@ import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
-  display: "swap", // Fallback
+  display: "swap", // Show fallback text immediately, swap when font loads
   weight: ["400", "500", "600", "700"],
 });
 
