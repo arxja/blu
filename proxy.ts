@@ -7,7 +7,6 @@ const publicRoutes = [
   "/sign-up",
   "/api/sign-in",
   "/api/sign-up",
-  "/",
 ];
 
 const protectedRoutes = ["/dashboard", "/workspaces", "/api/protected"];
@@ -24,6 +23,10 @@ function getSubdomain(request: NextRequest): string | null {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const subdomain = getSubdomain(request);
+
+  if (pathname === "/") {
+    return NextResponse.next();
+  }
 
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
