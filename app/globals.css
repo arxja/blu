@@ -160,7 +160,8 @@
 @layer base {
   /* Apply default text color and background */
   html {
-    @apply bg-canvas text-text-primary;
+    `@apply` bg-canvas text-text-primary;
+
     transition: var(--transition-theme);
   }
 
