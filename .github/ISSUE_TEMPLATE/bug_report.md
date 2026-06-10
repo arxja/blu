@@ -29,7 +29,7 @@ If applicable, add screenshots to help explain your problem.
 
 ## Environment
 
-- BugOn: [feature/core/etc]
+- Affected Area: [feature/core/etc]
 - Version: [e.g., 1.0.0]
 - OS: [e.g., Windows/Mac/Linux]
 - Node Version: [e.g., 18.x]
