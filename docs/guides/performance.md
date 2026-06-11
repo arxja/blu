@@ -291,6 +291,8 @@ import HeavyChart from './HeavyChart'
 import AnalyticsTracker from './Analytics'
 
 // ✅ Good - Load when needed
+import dynamic from 'next/dynamic'
+
 const HeavyChart = dynamic(() => import('./HeavyChart'), {
   ssr: false
 })
