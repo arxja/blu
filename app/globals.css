@@ -195,3 +195,38 @@
     background-color: var(--color-border-heavy);
   }
 }
+
+@layer utilities {
+  .nav-hover-btn {
+    @apply relative cursor-pointer;
+    @apply after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full;
+    @apply after:origin-bottom-right after:scale-x-0;
+    @apply after:transition-transform after:duration-300 after:ease-[cubic-bezier(0.65_0.05_0.36_1)];
+    @apply hover:after:origin-bottom-left hover:after:scale-x-100;
+    @apply after:bg-primary-500;
+  }
+
+  .dark .nav-hover-btn::after {
+    @apply after:bg-primary-400;
+  }
+
+  .floating-nav {
+    @apply rounded-xl border border-border-light bg-surface/80 backdrop-blur-md shadow-lg transition-all duration-300;
+  }
+
+  .dark .floating-nav {
+    @apply bg-surface/95 border-border-default shadow-xl backdrop-blur-lg;
+  }
+
+  .nav-hover-btn:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-surface rounded-sm;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .nav-hover-btn::after,
+    .floating-nav {
+      @apply transition-none;
+    }
+  }
+}
