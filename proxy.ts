@@ -7,6 +7,7 @@ const publicRoutes = [
   "/sign-up",
   "/api/sign-in",
   "/api/sign-up",
+  "/pricing",
 ];
 
 const protectedRoutes = ["/dashboard", "/workspaces", "/api/protected"];
