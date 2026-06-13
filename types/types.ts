@@ -1,4 +1,4 @@
-interface NavItemsTypes {
+export interface NavItemsTypes {
   name: string;
   link: string;
 }

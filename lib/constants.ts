@@ -1,3 +1,5 @@
+import { NavItemsTypes } from "@/types/types";
+
 export const PLANS = [
   {
     id: "free",
