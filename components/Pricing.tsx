@@ -150,6 +150,10 @@ const Pricing = () => {
               Monthly
             </span>
             <button
+            type="button"
+              aria-label="Toggle billing cycle"
+              role="switch"
+              aria-checked={billingCycle === "yearly"}
               onClick={() =>
                 setBillingCycle((prev) =>
                   prev === "monthly" ? "yearly" : "monthly",
