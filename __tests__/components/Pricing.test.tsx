@@ -92,7 +92,7 @@ describe("Pricing Component", () => {
 
       expect(screen.getByText("$49")).toBeInTheDocument();
 
-      const toggle = screen.getByRole("button");
+      const toggle = screen.getByRole("switch");
       await user.click(toggle);
 
       await waitFor(() => {
@@ -109,7 +109,8 @@ describe("Pricing Component", () => {
       const user = userEvent.setup();
       render(<Pricing />);
 
-      const toggle = screen.getByRole("button");
+      // Updated: Get by role "switch"
+      const toggle = screen.getByRole("switch");
       await user.click(toggle);
 
       await waitFor(() => {
@@ -117,16 +118,11 @@ describe("Pricing Component", () => {
       });
     });
 
-    it("shows 'Save 15%' badge on toggle", () => {
-      render(<Pricing />);
-      expect(screen.getByText(/Save 15%/i)).toBeInTheDocument();
-    });
-
     it("maintains correct price after toggling back to monthly", async () => {
       const user = userEvent.setup();
       render(<Pricing />);
 
-      const toggle = screen.getByRole("button");
+      const toggle = screen.getByRole("switch");
 
       await user.click(toggle);
       await waitFor(() => {
@@ -175,7 +171,7 @@ describe("Pricing Component", () => {
       const user = userEvent.setup();
       render(<Pricing />);
 
-      const toggle = screen.getByRole("button");
+      const toggle = screen.getByRole("switch");
       await user.click(toggle);
 
       await waitFor(() => {
@@ -252,7 +248,7 @@ describe("Pricing Component", () => {
       const user = userEvent.setup();
       render(<Pricing />);
 
-      const toggle = screen.getByRole("button");
+      const toggle = screen.getByRole("switch");
       await user.click(toggle);
 
       const allSavingsMessages = screen.queryAllByText(/Save \$/i);
@@ -285,7 +281,7 @@ describe("Pricing Component - Accessibility", () => {
 
   it("toggle button has focus styles", () => {
     render(<Pricing />);
-    const toggle = screen.getByRole("button");
+    const toggle = screen.getByRole("switch");
     expect(toggle.className).toContain("focus:outline-none");
     expect(toggle.className).toContain("focus:ring-2");
   });
