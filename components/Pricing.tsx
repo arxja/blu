@@ -19,6 +19,7 @@ const Pricing = () => {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly",
   );
+  const checkoutBaseUrl = process.env.NEXT_PUBLIC_STRIPE_CHECKOUT_URL;
 
   // Set up GSAP animations
   useGSAP(() => {
@@ -273,9 +274,9 @@ const Pricing = () => {
                     href={
                       isEnterprise
                         ? "mailto:sales@example.com"
-                        : `${
-                            process.env.NEXT_PUBLIC_STRIPE_CHECKOUT_URL
-                          }?plan=${plan.id}&billing=${billingCycle}`
+                        : checkoutBaseUrl
+                          ? `${checkoutBaseUrl}?plan=${plan.id}&billing=${billingCycle}`
+                          : "/contact-sales"
                     }
                     className="block w-full py-3 px-4 rounded-xl text-center font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                     style={{
