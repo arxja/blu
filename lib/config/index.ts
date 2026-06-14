@@ -33,6 +33,7 @@ const clientSchema = z.object({
     .default("false")
     .transform((v) => v === "true"),
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_STRIPE_CHECKOUT_URL: z.string()
 });
 
 // Export types

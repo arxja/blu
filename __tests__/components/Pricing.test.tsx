@@ -238,13 +238,13 @@ describe("Pricing Component", () => {
   });
 
   describe("Edge Cases", () => {
-    it("handles missing environment variables gracefully", () => {
-      process.env.NEXT_PUBLIC_STRIPE_CHECKOUT_URL = undefined;
+    it("handles correct path redirection", () => {
+      const SC = process.env.NEXT_PUBLIC_STRIPE_CHECKOUT_URL;
       render(<Pricing />);
       const proButton = screen.getByText("Start Pro Trial").closest("a");
       expect(proButton).toHaveAttribute(
         "href",
-        "undefined?plan=pro&billing=monthly",
+        `${SC}?plan=pro&billing=monthly`,
       );
     });
 
