@@ -36,8 +36,8 @@ const clientSchema = z.object({
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
   NEXT_PUBLIC_STRIPE_CHECKOUT_URL: z.string(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith("pk_"),
-  NEXT_PUBLIC_BASIC_PRICE_ID: z.string().startsWith("price"),
   NEXT_PUBLIC_PRO_PRICE_ID: z.string().startsWith("price"),
+  NEXT_PUBLIC_ENTERPRISE_PRICE_ID: z.string().startsWith("price"),
 });
 
 // Export types
