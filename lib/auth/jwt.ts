@@ -44,3 +44,9 @@ export async function removeAuthToken(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete("auth_token");
 }
+
+export async function getCurrentUser() {
+  const token = await getAuthToken();
+  if (!token) return null;
+  return verifyJWT(token);
+}
