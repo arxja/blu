@@ -1,6 +1,7 @@
 import Stripe from "stripe";
+import { clientConfig, serverConfig } from "../config";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+export const stripe = new Stripe(serverConfig.STRIPE_SECRET_KEY, {
   apiVersion: "2026-05-27.dahlia",
   typescript: true,
 });
@@ -8,7 +9,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Helper to test mode
 export const isStripeTestMode = () => {
   return (
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith("pk_test_") ??
+    clientConfig.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith("pk_test_") ??
     false
   );
 };
