@@ -37,3 +37,7 @@ jobs:
           APP_URL: ${{ secrets.APP_URL }}
           NODE_ENV: "development"
           LOG_LEVEL: "info"
+          NEXT_PUBLIC_STRIPE_CHECKOUT_URL: "https://checkout.stripe.com"
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_PRO_PRICE_ID: ${{ secrets.NEXT_PUBLIC_PRO_PRICE_ID }}
+          NEXT_PUBLIC_ENTERPRISE_PRICE_ID: ${{ secrets.NEXT_PUBLIC_ENTERPRISE_PRICE_ID }}
