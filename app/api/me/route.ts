@@ -16,10 +16,19 @@ export async function GET() {
   const user = await dashboardUserModel
     .findById(authUser.userId)
     .select("-passwordHash");
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const membership = await membershipModel.findOne({
     userId: user._id,
     tenantId: authUser.tenantId,
+    isActive: true,
   });
+  if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const tenant = await tenantModel.findById(authUser.tenantId);
   return NextResponse.json({
     user: {

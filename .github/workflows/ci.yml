@@ -29,3 +29,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:ci
       - run: pnpm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          APP_URL: ${{ secrets.APP_URL }}
+          NODE_ENV: "development"
+          LOG_LEVEL: "info"
