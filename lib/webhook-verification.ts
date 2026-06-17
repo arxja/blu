@@ -1,6 +1,5 @@
 import crypto from "crypto";
 import { log } from "./logger";
-import { serverConfig } from "./config";
 
 interface WebhookVerifier {
   verify(rawBody: Buffer, signature: string, secret: string): boolean;
@@ -94,10 +93,10 @@ function getVerifier(provider: string): WebhookVerifier {
 // Get webhook secret from environment
 function getWebhookSecret(provider: string): string {
   const secretMap: Record<string, string | undefined> = {
-    stripe: serverConfig.STRIPE_WEBHOOK_SECRET,
-    github: serverConfig.GITHUB_WEBHOOK_SECRET,
-    slack: serverConfig.SLACK_WEBHOOK_SECRET,
-    shopify: serverConfig.SHOPIFY_WEBHOOK_SECRET,
+    stripe: process.env.STRIPE_WEBHOOK_SECRET,
+    github: process.env.GITHUB_WEBHOOK_SECRET,
+    slack: process.env.SLACK_WEBHOOK_SECRET,
+    shopify: process.env.SHOPIFY_WEBHOOK_SECRET,
   };
 
   const secret = secretMap[provider.toLowerCase()];
