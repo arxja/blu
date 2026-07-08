@@ -8,7 +8,6 @@
 - [ ] Real-time analytics dashboard
 - [ ] Stripe webhook handling
 - [ ] Internationalization
-- [ ] Infinite scroll with cursor pagination
 - [ ] Performance optimized (SSR/ISR)
 - [ ] Production logging & monitoring
 - [ ] Security best practices
