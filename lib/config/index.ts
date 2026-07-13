@@ -22,6 +22,9 @@ const serverSchema = z.object({
   APP_URL: z.string().url(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]),
   SENTRY_DSN: z.string().url().optional(),
+  STRIPE_PRO_MONTHLY_PRICE_ID: z.string().optional(),
+  STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1),
 });
 
 const clientSchema = z.object({
@@ -33,7 +36,7 @@ const clientSchema = z.object({
     .default("false")
     .transform((v) => v === "true"),
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_CHECKOUT_URL: z.string()
+  NEXT_PUBLIC_STRIPE_CHECKOUT_URL: z.string(),
 });
 
 // Export types
