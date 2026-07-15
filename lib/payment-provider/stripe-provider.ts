@@ -8,7 +8,7 @@ export class StripeProvider implements PaymentProvider {
 
   constructor() {
     this.stripe = new Stripe(serverConfig.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-06-24.dahlia.",
+      apiVersion: "2026-06-24.dahlia",
     });
   }
 
