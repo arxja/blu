@@ -8,37 +8,40 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// Mock Next.js router if needed
+// Only run browser‑specific mocks if we are in a browser‑like environment
 beforeAll(() => {
-  // Mock window.matchMedia (required for some UI components)
-  Object.defineProperty(window, "matchMedia", {
-    writable: true,
-    value: vi.fn().mockImplementation((query) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  });
+  if (typeof window !== "undefined") {
+    // Mock window.matchMedia
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  }
 
-  // Mock IntersectionObserver
-  global.IntersectionObserver = class IntersectionObserver {
-    constructor() {}
-    disconnect() {
-      return null;
-    }
-    observe() {
-      return null;
-    }
-    takeRecords() {
-      return [];
-    }
-    unobserve() {
-      return null;
-    }
-  } as any;
+  if (typeof global.IntersectionObserver === "undefined") {
+    global.IntersectionObserver = class IntersectionObserver {
+      constructor() {}
+      disconnect() {
+        return null;
+      }
+      observe() {
+        return null;
+      }
+      takeRecords() {
+        return [];
+      }
+      unobserve() {
+        return null;
+      }
+    } as any;
+  }
 });

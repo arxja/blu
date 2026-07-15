@@ -66,7 +66,7 @@ export default defineConfig({
 
     // Environment variables for tests
     env: {
-      NODE_ENV: "test",
+      NODE_ENV: "development",
       NEXT_PUBLIC_TEST_MODE: "true",
     },
   },
