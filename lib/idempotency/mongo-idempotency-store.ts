@@ -20,3 +20,5 @@ export class MongoIdempotencyStore {
     }
   }
 }
+
+export const idempotencyStore = new MongoIdempotencyStore();
