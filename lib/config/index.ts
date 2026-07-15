@@ -1,24 +1,18 @@
 import { z } from "zod";
 import dotenv from "dotenv";
 
-const envFile =
-  process.env.NODE_ENV === "production"
-    ? ".env.production"
-    : process.env.NODE_ENV === "development"
-      ? ".env.development"
-      : ".env";
-
-dotenv.config({ path: envFile });
+if (!process.env.CI) {
+  dotenv.config({ path: ".env" });
+}
 
 const serverSchema = z.object({
-  // Server-only
   DATABASE_URL: z.string(),
   JWT_SECRET: z.string().min(32),
   STRIPE_SECRET_KEY: z.string().startsWith("sk_"),
   REDIS_URL: z.string().url().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  NODE_ENV: z.enum(["development", "staging", "production"]),
+  NODE_ENV: z.enum(["development", "staging", "production", "test", "ci"]),
   APP_URL: z.string().url(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]),
   SENTRY_DSN: z.string().url().optional(),
@@ -28,7 +22,6 @@ const serverSchema = z.object({
 });
 
 const clientSchema = z.object({
-  // Client-safe
   NEXT_PUBLIC_APP_NAME: z.string().default("My App"),
   NEXT_PUBLIC_API_URL: z.string().url().default("/api"),
   NEXT_PUBLIC_ENABLE_ANALYTICS: z
@@ -39,11 +32,9 @@ const clientSchema = z.object({
   NEXT_PUBLIC_STRIPE_CHECKOUT_URL: z.string(),
 });
 
-// Export types
 export type ServerConfig = z.infer<typeof serverSchema>;
 export type ClientConfig = z.infer<typeof clientSchema>;
 
-// Server-only config getter
 export function getServerConfig(): ServerConfig {
   if (typeof window !== "undefined") {
     throw new Error(
@@ -53,37 +44,19 @@ export function getServerConfig(): ServerConfig {
 
   try {
     const serverConfig = serverSchema.parse(process.env);
-
-    // Production security check
-    if (process.env.NODE_ENV === "production") {
-      const requiredKeys = [
-        "DATABASE_URL",
-        "JWT_SECRET",
-        "STRIPE_SECRET_KEY",
-      ] as const;
-
-      const missingRequired = requiredKeys.filter((key) => !process.env[key]);
-
-      if (missingRequired.length > 0) {
-        console.error(
-          "❌ Missing required environment variables:",
-          missingRequired,
-        );
-        process.exit(1);
-      }
-    }
-
     return serverConfig;
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error("❌ Environment validation failed:", error.issues);
-      if (process.env.NODE_ENV === "production") process.exit(1);
+
+      if (process.env.NODE_ENV === "production" && !process.env.CI) {
+        process.exit(1);
+      }
     }
     throw error;
   }
 }
 
-// Client-safe config getter
 export function getClientConfig(): ClientConfig {
   try {
     return clientSchema.parse(
