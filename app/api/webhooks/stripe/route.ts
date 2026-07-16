@@ -4,13 +4,6 @@ import { queue } from "@/lib/queue/in-memory";
 import { handleWebhookEvent } from "@/services/tenant-billing.service";
 import { log } from "@/lib/logger";
 
-// Must disable body parsing to get raw body
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 export async function POST(req: NextRequest) {
   const start = Date.now();
 
