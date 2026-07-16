@@ -15,19 +15,24 @@ export class InMemoryQueue implements QueueAdapter {
       log.info("Processing job", { jobId: job.id, attempt });
       await handler(job);
       log.info("Job completed", { jobId: job.id, attempt });
+      return;
     } catch (error) {
       log.error("Job failed", error as Error, { jobId: job.id, attempt });
+
+      if (attempt >= this.maxRetries) {
+        this.deadLetterJobs.push(job);
+        log.info("Job moved to DLQ", {
+          jobId: job.id,
+          deadLetterSize: this.deadLetterJobs.length,
+        });
+        return;
+      }
+
       const delay = this.backoffBase * 2 ** attempt;
       log.info("Retrying job", { jobId: job.id, attempt });
       await new Promise((resolve) => setTimeout(resolve, delay));
       return this.processWithRetry(job, handler, attempt + 1);
     }
-    // Exhausted retries - send to dead-letter
-    this.deadLetterJobs.push(job);
-    log.info("Job moved to DLQ", {
-      jobId: job.id,
-      deadLetterSize: this.deadLetterJobs.length,
-    });
   }
 
   enqueue(job: QueueJob, handler: (job: QueueJob) => Promise<void>): void {
