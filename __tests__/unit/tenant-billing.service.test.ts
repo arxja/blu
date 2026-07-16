@@ -156,10 +156,13 @@ describe("handleWebhookEvent", () => {
     vi.mocked(Tenant.findOne).mockResolvedValue(null);
 
     const event = buildEvent();
-    await handleWebhookEvent(event);
+    await expect(handleWebhookEvent(event)).rejects.toThrow(
+      "Tenant not found for checkout session",
+    );
 
     // Tenant should not be modified since it wasn't found
     expect(mockTenant.plan).toBe("free");
     expect(mockTenant.save).not.toHaveBeenCalled();
+    expect(idempotencyStore.markProcessed).not.toHaveBeenCalled();
   });
 });

@@ -31,7 +31,7 @@ export async function handleWebhookEvent(event: WebhookEvent) {
       eventId: event.id,
       type: event.type,
     });
-    throw error; // allow queue to retry
+    throw error; // queue will retry with backoff, then dead-letter
   }
 }
 
@@ -75,7 +75,7 @@ async function handleCheckoutCompleted(event: WebhookEvent) {
       new Error("Tenant not found"),
       { customerId, ownerId },
     );
-    return;
+    throw new AppError("Tenant not found for checkout session");
   }
 
   tenant.plan = planId;
