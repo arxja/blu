@@ -156,7 +156,7 @@ describe("Stripe webhook route", () => {
     vi.mocked(getPaymentProvider).mockReturnValue(mockProvider);
 
     // Use vi.mocked() to get the mock type
-    vi.mocked(queue.enqueue).mockRejectedValue(new Error("Queue full"));
+    vi.mocked(queue.enqueue).mockRejectedValueOnce(new Error("Queue full"));
 
     const req = mockRequest(validBody, { "stripe-signature": validSignature });
     const res = await POST(req);

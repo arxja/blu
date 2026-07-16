@@ -98,10 +98,21 @@ async function handleCheckoutCompleted(event: WebhookEvent) {
 async function handleSubscriptionDeleted(event: WebhookEvent) {
   const subscription = event.data;
   const customerId = event.customerId || subscription.customer;
-  if (!customerId) return;
+  if (!customerId) {
+    log.warn("Missing customer ID in subscription deleted event", {
+      eventId: event.id,
+    });
+    return;
+  }
 
   const tenant = await Tenant.findOne({ stripeCustomerId: customerId });
-  if (!tenant) return;
+  if (!tenant) {
+    log.warn("Tenant not found for subscription deleted", {
+      customerId,
+      eventId: event.id,
+    });
+    return;
+  }
 
   const freePlan = PLANS.find((p) => p.id === "free")!;
   tenant.plan = "free";
