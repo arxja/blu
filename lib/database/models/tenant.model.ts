@@ -8,6 +8,7 @@ export interface ITenant extends mongoose.Document {
   status: "active" | "trialing" | "past_due" | "suspended";
   billingEmail: string;
   stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
   trialEndsAt?: Date;
   quotas: {
     monthlyEvents: number;
@@ -40,6 +41,7 @@ const TenantSchema = new Schema<ITenant>(
     },
     billingEmail: { type: String, required: true },
     stripeCustomerId: { type: String },
+    stripeSubscriptionId: { type: String },
     trialEndsAt: { type: Date },
     quotas: {
       monthlyEvents: { type: Number, default: 100000 },
