@@ -28,7 +28,7 @@ The service locates a tenant using:
 - `stripeCustomerId` (stored on the tenant) – available in most subscription/invoice events.
 - `client_reference_id` from the checkout session – set during the checkout process to the tenant’s `ownerId`.
 
-If no tenant is found, the event is logged and ignored (you may later choose to auto‑create tenants).
+If no tenant is found, the service should **not** mark the event as processed. Instead, it throws a retryable error (e.g., `TenantNotFoundError`) to trigger the queue’s retry mechanism, or alternatively stores the event in a dead‑letter/pending collection for manual reconciliation. This ensures that transient issues (e.g., tenant creation lag) are retried, and permanent failures are not silently dropped. Normal processing for resolved tenants continues unchanged.
 
 ## Error Handling
 
