@@ -7,7 +7,7 @@ The single endpoint at `/api/webhooks/stripe` receives all Stripe events.
 `app/api/webhooks/stripe/route.ts`:
 
 - **Signature verification** – Uses `getPaymentProvider('stripe').verifySignature()`.
-- **Immediate 202** – On valid signature, we parse the event, enqueue it, and return `{ received: true }` with status `202`.
+- **Immediate 202** – On valid signature and successful enqueue, we parse the event, enqueue it, and return `{ received: true }` with status `202`. If enqueue fails (e.g., queue unavailable), we return a `500` error to let Stripe retry.
 - **Error responses** – Missing signature → `400`, invalid signature → `401`.
 
 ## Code Walkthrough

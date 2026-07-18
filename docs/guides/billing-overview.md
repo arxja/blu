@@ -1,19 +1,19 @@
 # SaaSify - Billing System Overview
 
-It receives events from Stripe, verifies their authenticity, processes them with at-least-once semantics (with idempotency via MongoDB TTL), and updates your multi‑tenant SaaS data model (Tenant) accordingly.
-All heavy work is deferred to a background queue, so the webhook endpoint always responds immediately with `202 Accepted`.
+The billing system is built around **Stripe webhooks** and a **clean separation of concerns**.
+It receives events from Stripe, verifies their authenticity, processes them with at‑least‑once semantics (with idempotency via MongoDB TTL), and updates your multi‑tenant SaaS data model (Tenant) accordingly. All heavy work is deferred to a background queue, so the webhook endpoint responds with `202 Accepted` after successful validation and enqueueing; if enqueueing fails, it returns a `500` error.
 
 ## Architecture
 
 ```mermaid
 graph TD
     A[Stripe Webhook] --> B[Signature Verification]
-B --> C[Provider Abstraction]
-C --> D[Idempotency Guard]
-D --> E[Job Queue]
-E --> F[Immediate 202]
-F --> G[Tenant Billing Service]
-G --> H[Email Notification]
+    B --> C[Provider Abstraction]
+    C --> D[Idempotency Guard]
+    D --> E[Job Queue]
+    E --> F[Immediate 202]
+    F --> G[Tenant Billing Service]
+    G --> H[Email Notification<br><i>no-op in demo</i>]
 
     style A fill:#1a1a1a,stroke:#666,color:#fff
     style B fill:#1a1a1a,stroke:#666,color:#fff
