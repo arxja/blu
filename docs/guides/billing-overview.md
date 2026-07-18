@@ -1,7 +1,6 @@
 # SaaSify - Billing System Overview
 
-The billing system is built around **Stripe webhooks** and a **clean separation of concerns**.
-It receives events from Stripe, verifies their authenticity, processes them exactly once, and updates your multi‑tenant SaaS data model (Tenant) accordingly.
+It receives events from Stripe, verifies their authenticity, processes them with at-least-once semantics (with idempotency via MongoDB TTL), and updates your multi‑tenant SaaS data model (Tenant) accordingly.
 All heavy work is deferred to a background queue, so the webhook endpoint always responds immediately with `202 Accepted`.
 
 ## Architecture
@@ -9,12 +8,12 @@ All heavy work is deferred to a background queue, so the webhook endpoint always
 ```mermaid
 graph TD
     A[Stripe Webhook] --> B[Signature Verification]
-    B --> C[Immediate 202]
-    C --> D[Provider Abstraction]
-    D --> E[Idempotency Guard]
-    E --> F[Job Queue<br><i>in-memory for demo</i>]
-    F --> G[Tenant Billing Service]
-    G --> H[Email Notification<br><i>no-op in demo</i>]
+B --> C[Provider Abstraction]
+C --> D[Idempotency Guard]
+D --> E[Job Queue]
+E --> F[Immediate 202]
+F --> G[Tenant Billing Service]
+G --> H[Email Notification]
 
     style A fill:#1a1a1a,stroke:#666,color:#fff
     style B fill:#1a1a1a,stroke:#666,color:#fff
@@ -35,13 +34,13 @@ graph TD
 
 ## Core Components
 
-| Component | Responsibility |
-|-----------|----------------|
-| `PaymentProvider` | Signature verification, event parsing |
-| `MongoIdempotencyStore` | Prevents double‑processing |
-| `QueueAdapter` | Defers work to background |
-| `TenantBillingService` | Handles all Stripe event types and updates the database |
-| `EmailService` | Sends transactional emails (no‑op in demo) |
-| Webhook route | Receives raw body, verifies, enqueues |
+| Component               | Responsibility                                          |
+| ----------------------- | ------------------------------------------------------- |
+| `PaymentProvider`       | Signature verification, event parsing                   |
+| `MongoIdempotencyStore` | Prevents double‑processing                              |
+| `QueueAdapter`          | Defers work to background                               |
+| `TenantBillingService`  | Handles all Stripe event types and updates the database |
+| `EmailService`          | Sends transactional emails (no‑op in demo)              |
+| Webhook route           | Receives raw body, verifies, enqueues                   |
 
 For details on each part, see the specific guides.
