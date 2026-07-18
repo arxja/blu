@@ -11,7 +11,7 @@ To prevent double‑processing (e.g., upgrading a tenant twice), we use an **ide
 
 ## MongoDB Model
 
-`lib/database/models/processedWebhook.ts`:
+`lib/database/models/processedWebhook.model.ts`:
 
 ```ts
 import mongoose from 'mongoose';
