@@ -4,6 +4,20 @@ import { QuotaService } from "@/services/quota-tenant.service";
 import Tenant from "@/lib/database/models/tenant.model";
 import TenantUsage from "@/lib/database/models/tenant-usage.model";
 
+vi.mock("@/lib/config", () => ({
+  serverConfig: {
+    DATABASE_URL: "mongodb://localhost:27017/test",
+    JWT_SECRET: "test-secret".repeat(4), // at least 32 chars
+    STRIPE_SECRET_KEY: "sk_test_dummy",
+    APP_URL: "http://localhost:3000",
+    LOG_LEVEL: "error",
+    STRIPE_WEBHOOK_SECRET: "whsec_test",
+    ARCJET_KEY: "ajkey_test",
+    ARCJET_ENV: "development",
+    NODE_ENV: "test",
+  },
+}));
+
 vi.mock("@/lib/database/models/tenant.model");
 vi.mock("@/lib/database/models/tenant-usage.model");
 
