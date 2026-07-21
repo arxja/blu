@@ -85,15 +85,24 @@ export class QuotaService {
   }
 
   /**
+   * Resolve the tenant's effective API rate limit for Arcjet.
+   */
+  async getApiRateLimit(): Promise<number> {
+    const tenant = await this.getTenant();
+    const limit = tenant.quotas?.apiRateLimit;
+
+    if (typeof limit !== "number") return 100;
+    return limit === -1 ? 10_000_000 : limit;
+  }
+
+  /**
    * Check API rate limit (handled by middleware, but available as a method too).
    */
   async checkApiRateLimit(): Promise<QuotaCheckResult> {
-    const tenant = await this.getTenant();
-    const limit = tenant.quotas.apiRateLimit;
-    if (limit === -1) return { allowed: true };
+    const limit = await this.getApiRateLimit();
+    if (limit === 10_000_000) return { allowed: true, limit };
 
-    // This is handled by middleware typically, but we could also check here.
-    return { allowed: true };
+    return { allowed: true, limit };
   }
 
   private async checkCountLimit(
