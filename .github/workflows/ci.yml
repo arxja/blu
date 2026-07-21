@@ -74,6 +74,8 @@ jobs:
           APP_URL: "https://example.com"
           LOG_LEVEL: "error"
           STRIPE_WEBHOOK_SECRET: "whsec_dummy_webhook_secret"
+          ARCJET_ENV: "development"
+          ARCJET_KEY: ajkey_dummy
           # Client-side
           NEXT_PUBLIC_APP_NAME: "My App"
           NEXT_PUBLIC_API_URL: "/api"
