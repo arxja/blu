@@ -36,6 +36,20 @@ jobs:
         env:
           NODE_ENV: test
           CI: true
+          # Required server env vars (dummy values)
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          JWT_SECRET: "dummy-jwt-secret-that-is-at-least-32-characters-long!!"
+          STRIPE_SECRET_KEY: "sk_test_dummy_key_for_ci_test"
+          APP_URL: "https://example.com"
+          LOG_LEVEL: "error"
+          STRIPE_WEBHOOK_SECRET: "whsec_dummy_webhook_secret"
+          ARCJET_ENV: "development"
+          ARCJET_KEY: "ajkey_dummy"
+          # Client-side (needed if any client config is imported)
+          NEXT_PUBLIC_APP_NAME: "My App"
+          NEXT_PUBLIC_API_URL: "/api"
+          NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
+          NEXT_PUBLIC_STRIPE_CHECKOUT_URL: "https://checkout.stripe.com"
       
   build:
     runs-on: ubuntu-latest
