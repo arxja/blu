@@ -1,6 +1,7 @@
 import Tenant from "@/lib/database/models/tenant.model";
 import TenantUsage from "@/lib/database/models/tenant-usage.model";
 import { AppError } from "@/lib/errors";
+import { log } from "@/lib/logger";
 
 export type QuotaCheckResult = {
   allowed: boolean;
@@ -128,5 +129,26 @@ export class QuotaService {
       month,
     }).lean();
     return doc?.count ?? 0;
+  }
+
+  async incrementEventCount(
+    tenantId: string,
+    amount: number = 1,
+  ): Promise<void> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    try {
+      await TenantUsage.findOneAndUpdate(
+        { tenantId, year, month },
+        { $inc: { count: amount } },
+        { upsert: true, new: true },
+      );
+    } catch (error) {
+      log.error("Failed to increment event count", error as Error, {
+        tenantId,
+      });
+    }
   }
 }
