@@ -69,4 +69,30 @@ describe("QuotaService", () => {
     const result = await service.canInviteMember(999);
     expect(result.allowed).toBe(true);
   });
+
+  it("returns the tenant-specific API rate limit", async () => {
+    const tenantData = { quotas: { apiRateLimit: 250 } };
+
+    vi.mocked(Tenant.findById).mockReturnValue(
+      mockQueryWithLean(tenantData) as any,
+    );
+
+    const service = new QuotaService(tenantId);
+    const limit = await service.getApiRateLimit();
+
+    expect(limit).toBe(250);
+  });
+
+  it("maps unlimited API rate limits to a very high fallback", async () => {
+    const tenantData = { quotas: { apiRateLimit: -1 } };
+
+    vi.mocked(Tenant.findById).mockReturnValue(
+      mockQueryWithLean(tenantData) as any,
+    );
+
+    const service = new QuotaService(tenantId);
+    const limit = await service.getApiRateLimit();
+
+    expect(limit).toBe(10_000_000);
+  });
 });
