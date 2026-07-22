@@ -46,7 +46,7 @@ export default defineConfig({
 
     exclude: ["node_modules", ".next", "coverage", "**/e2e/**"],
 
-    // Performance 
+    // Performance
     testTimeout: 10000,
     hookTimeout: 10000,
 
@@ -68,13 +68,19 @@ export default defineConfig({
     env: {
       NODE_ENV: "development",
       NEXT_PUBLIC_TEST_MODE: "true",
+      ARCJET_KEY: "test-arcjet-key",
+      ARCJET_ENV: "development",
     },
   },
 
   resolve: {
     alias: {
-      "next/router": fileURLToPath(new URL("./src/__mocks__/next/router.ts", import.meta.url)),
-      "next/navigation": fileURLToPath(new URL("./src/__mocks__/next/navigation.ts", import.meta.url)),
+      "next/router": fileURLToPath(
+        new URL("./src/__mocks__/next/router.ts", import.meta.url),
+      ),
+      "next/navigation": fileURLToPath(
+        new URL("./src/__mocks__/next/navigation.ts", import.meta.url),
+      ),
     },
   },
 });
