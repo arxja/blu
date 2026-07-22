@@ -140,23 +140,20 @@ export class QuotaService {
     return doc?.count ?? 0;
   }
 
-  async incrementEventCount(
-    tenantId: string,
-    amount: number = 1,
-  ): Promise<void> {
+  async incrementEventCount(amount: number = 1): Promise<void> {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
 
     try {
       await TenantUsage.findOneAndUpdate(
-        { tenantId, year, month },
+        { tenantId: this.tenantId, year, month },
         { $inc: { count: amount } },
         { upsert: true, new: true },
       );
     } catch (error) {
       log.error("Failed to increment event count", error as Error, {
-        tenantId,
+        tenantId: this.tenantId,
       });
     }
   }
