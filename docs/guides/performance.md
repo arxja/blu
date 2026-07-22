@@ -1,4 +1,4 @@
-# 🚀 Performance Optimization Guide For SaaSify
+# 🚀 Performance Optimization Guide For Blu
 
 This guide covers the essential metrics that affect user experience and SEO, with specific thresholds and actionable fixes for each.
 
@@ -265,19 +265,19 @@ export default function Layout({ children }) {
 ```typescript
 // ❌ Bad - One long task
 function processAllData(items) {
-  items.forEach(item => {
-    heavyOperation(item)  // Blocks for hundreds of ms
-  })
+  items.forEach((item) => {
+    heavyOperation(item); // Blocks for hundreds of ms
+  });
 }
 
 // ✅ Good - Yield to browser
 async function processAllData(items) {
   for (let i = 0; i < items.length; i++) {
-    heavyOperation(items[i])
-    
+    heavyOperation(items[i]);
+
     // Let browser breathe every 5 items
     if (i % 5 === 0) {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
   }
 }
@@ -287,45 +287,46 @@ async function processAllData(items) {
 
 ```ts
 // ❌ Bad - Loading everything upfront
-import HeavyChart from './HeavyChart'
-import AnalyticsTracker from './Analytics'
+import HeavyChart from "./HeavyChart";
+import AnalyticsTracker from "./Analytics";
 
 // ✅ Good - Load when needed
-import dynamic from 'next/dynamic'
+import dynamic from "next/dynamic";
 
-const HeavyChart = dynamic(() => import('./HeavyChart'), {
-  ssr: false
-})
+const HeavyChart = dynamic(() => import("./HeavyChart"), {
+  ssr: false,
+});
 
 // Load analytics after interaction
 useEffect(() => {
   const loadAnalytics = async () => {
-    const tracker = await import('./Analytics')
-    tracker.init()
-  }
-  
+    const tracker = await import("./Analytics");
+    tracker.init();
+  };
+
   // Wait for user interaction or idle time
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(loadAnalytics)
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(loadAnalytics);
   } else {
-    setTimeout(loadAnalytics, 2000)
+    setTimeout(loadAnalytics, 2000);
   }
-}, [])
+}, []);
 ```
 
 **3. Use web workers for heavy processing**
 
 ```ts
 // ❌ Bad - Processing on main thread
-const processed = expensiveOperation(largeDataset)
+const processed = expensiveOperation(largeDataset);
 
 // ✅ Good - Offload to worker
-const worker = new Worker(new URL('./data-worker.js', import.meta.url))
-worker.postMessage(largeDataset)
+const worker = new Worker(new URL("./data-worker.js", import.meta.url));
+worker.postMessage(largeDataset);
 worker.onmessage = (e) => {
-  setProcessed(e.data)
-}
+  setProcessed(e.data);
+};
 ```
+
 ## ⏱️ Total Blocking Time (TBT)
 
 **What it measures:** Sum of all long tasks (>50ms) between FCP and TTI.
@@ -346,15 +347,15 @@ worker.onmessage = (e) => {
 // ❌ Bad - Validate on every keystroke
 const form = useForm({
   resolver: zodResolver(schema),
-  mode: 'onChange'  // Validates on every input
-})
+  mode: "onChange", // Validates on every input
+});
 
 // ✅ Good - Validate on blur or submit
 const form = useForm({
   resolver: zodResolver(schema),
-  mode: 'onBlur',  // Only validates when leaving field
-  reValidateMode: 'onChange'  // Or 'onBlur' for stricter
-})
+  mode: "onBlur", // Only validates when leaving field
+  reValidateMode: "onChange", // Or 'onBlur' for stricter
+});
 ```
 
 **2. Debounce expensive operations**
@@ -362,20 +363,20 @@ const form = useForm({
 ```ts
 // ❌ Bad - Heavy operation on every input
 function handleSearch(value) {
-  const results = searchThroughLargeDatabase(value)  // Blocks
-  setResults(results)
+  const results = searchThroughLargeDatabase(value); // Blocks
+  setResults(results);
 }
 
 // ✅ Good - Debounced search
-import { useDebouncedCallback } from 'use-debounce'
+import { useDebouncedCallback } from "use-debounce";
 
 const handleSearch = useDebouncedCallback(
   async (value) => {
-    const results = await searchAPI(value)
-    setResults(results)
+    const results = await searchAPI(value);
+    setResults(results);
   },
-  300  // Wait 300ms before executing
-)
+  300, // Wait 300ms before executing
+);
 ```
 
 **3. Split client components**

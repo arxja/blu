@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SaaSify",
+  title: "Blu",
   description: "Multi-Tenant SaaS Starter Kit",
 };
 

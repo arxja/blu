@@ -1,4 +1,4 @@
-# SaaSify - Billing System Overview
+# Blu - Billing System Overview
 
 The billing system is built around **Stripe webhooks** and a **clean separation of concerns**.
 It receives events from Stripe, verifies their authenticity, processes them with at‑least‑once semantics (with idempotency via MongoDB TTL), and updates your multi‑tenant SaaS data model (Tenant) accordingly. All heavy work is deferred to a background queue, so the webhook endpoint responds with `202 Accepted` after successful validation and enqueueing; if enqueueing fails, it returns a `500` error.

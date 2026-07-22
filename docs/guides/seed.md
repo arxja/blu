@@ -27,7 +27,7 @@ Create a `.env` file in your project root
 
 ```bash
 # Required
-DATABASE_URL=mongodb://localhost:27017/saasify
+DATABASE_URL=mongodb://localhost:27017/Blu
 JWT_SECRET=your-super-secret-key-min-32-chars
 
 # Optional (for development)
@@ -313,7 +313,7 @@ async function customSeed() {
 NODE_ENV=development pnpm run seed
 
 # Staging (different database)
-DATABASE_URL=mongodb://localhost:27017/saasify_staging pnpm run seed
+DATABASE_URL=mongodb://localhost:27017/Blu_staging pnpm run seed
 
 # With custom seed
 bun run scripts/seed/index.ts -- --custom-data
@@ -323,8 +323,8 @@ bun run scripts/seed/index.ts -- --custom-data
 
 After seeding, use these credentials to log in:
 
-| Email                | Password | Role    | Tenant   | Subdomain            |
-| -------------------- | -------- | ------- | -------- | -------------------- |
+| Email                | Password | Role    | Tenant   | Subdomain               |
+| -------------------- | -------- | ------- | -------- | ----------------------- |
 | ceo@acme.com         | Test123! | owner   | Acme     | acme.localhost:3000     |
 | analyst@acme.com     | Test123! | analyst | Acme     | acme.localhost:3000     |
 | viewer@acme.com      | Test123! | viewer  | Acme     | acme.localhost:3000     |
