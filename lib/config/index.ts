@@ -19,6 +19,8 @@ const serverSchema = z.object({
   STRIPE_PRO_MONTHLY_PRICE_ID: z.string().optional(),
   STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
+  ARCJET_KEY: z.string().min(1),
+  ARCJET_ENV: z.enum(["development", "staging", "production"]),
 });
 
 const clientSchema = z.object({

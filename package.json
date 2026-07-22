@@ -18,6 +18,8 @@
     "seed": "bun run scripts/seed.ts"
   },
   "dependencies": {
+    "@arcjet/inspect": "^1.9.1",
+    "@arcjet/next": "^1.9.1",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.4.0",
     "dotenv": "^17.4.2",
