@@ -1,5 +1,4 @@
-# SaaSify Architecture
-
+# Blu Architecture
 
 ## System Overview Diagram
 
@@ -11,21 +10,21 @@ graph TB
         C[Workspace Dashboard<br/>subdomain.app.com]
         D[Public API Endpoints<br/>/api/track]
     end
-    
+
     subgraph "Authentication Layer"
         E[JWT Auth]
         F[Global User Session]
         G[Workspace Context]
         H[Role-based Access]
     end
-    
+
     subgraph "Backend Layer - Next.js API Routes"
         I[Auth Routes<br/>/api/auth/*]
         J[Workspace Routes<br/>/api/workspaces/*]
         K[Analytics Routes<br/>/api/analytics/*]
         L[Admin Routes<br/>/api/admin/*]
     end
-    
+
     subgraph "Database Layer - MongoDB"
         M[(DashboardUser)]
         N[(Tenant)]
@@ -36,22 +35,22 @@ graph TB
         S[(Report)]
         T[(Invitation)]
     end
-    
+
     subgraph "External Services"
         U[Stripe<br/>Billing]
         V[Resend<br/>Emails]
         W[Redis<br/>Rate Limiting]
     end
-    
+
     A --> E
     B --> F
     C --> G
     D --> K
-    
+
     E --> I
     F --> J
     G --> L
-    
+
     I --> M
     J --> N
     J --> O
@@ -60,11 +59,11 @@ graph TB
     L --> R
     L --> S
     L --> T
-    
+
     I --> U
     I --> V
     K --> W
-    
+
     style M fill:#f9f,stroke:#333,stroke-width:2px
     style N fill:#bbf,stroke:#333,stroke-width:2px
     style O fill:#bfb,stroke:#333,stroke-width:2px
@@ -79,7 +78,7 @@ sequenceDiagram
     participant A as Auth API
     participant DB as MongoDB
     participant J as JWT Service
-    
+
     rect rgb(0, 0, 0)
         Note over U,J: SIGN UP FLOW
         U->>F: Enter email, name, password
@@ -93,7 +92,7 @@ sequenceDiagram
         A-->>F: {token, user}
         F-->>U: Redirect to /dashboard
     end
-    
+
     rect rgb(0, 0, 0)
         Note over U,J: SIGN IN FLOW
         U->>F: Enter email, password
@@ -115,35 +114,35 @@ sequenceDiagram
 ```mermaid
 flowchart TD
     Start([User Authenticated]) --> Check{Has Workspaces?}
-    
+
     Check -->|No| CreateFirst[Show Empty State]
     CreateFirst --> CreateWorkspace[Create Workspace Form]
     CreateWorkspace --> ValidateSubdomain{Check Subdomain<br/>Availability}
-    
+
     ValidateSubdomain -->|Taken| ShowError[Show Error Message]
     ShowError --> CreateWorkspace
-    
+
     ValidateSubdomain -->|Available| CreateTenant[Create Tenant]
     CreateTenant --> CreateMembership[Create Membership<br/>Role: Owner]
     CreateMembership --> GenerateJWT[Generate JWT with<br/>Tenant Context]
     GenerateJWT --> RedirectSubdomain[Redirect to<br/>workspace.app.com]
-    
+
     Check -->|Yes| ShowWorkspaces[Show Workspace Cards]
     ShowWorkspaces --> UserAction{User Action}
-    
+
     UserAction -->|Select Workspace| SwitchWorkspace[Switch Workspace]
     SwitchWorkspace --> UpdateJWT[Update JWT Context]
     UpdateJWT --> RedirectSelected[Redirect to Selected<br/>Workspace]
-    
+
     UserAction -->|Create New| CreateWorkspace
     UserAction -->|Join via Invite| AcceptInvite[Accept Invitation]
     AcceptInvite --> CreateMembership2[Create Membership<br/>With Invited Role]
     CreateMembership2 --> RedirectInvited[Redirect to<br/>Workspace]
-    
+
     RedirectSubdomain --> Dashboard([Workspace Dashboard])
     RedirectSelected --> Dashboard
     RedirectInvited --> Dashboard
-    
+
     style Start fill:#2b2b2b
     style Dashboard fill:#162E93
     style CreateTenant fill:#1A1953
@@ -158,14 +157,14 @@ erDiagram
     DashboardUser ||--o{ Invitation : creates
     DashboardUser ||--o{ Dashboard : creates
     DashboardUser ||--o{ Report : creates
-    
+
     Tenant ||--o{ Membership : contains
     Tenant ||--o{ ApiKey : owns
     Tenant ||--o{ Event : receives
     Tenant ||--o{ Dashboard : contains
     Tenant ||--o{ Report : contains
     Tenant ||--o{ Invitation : sends
-    
+
     Membership {
         ObjectId userId
         ObjectId tenantId
@@ -174,7 +173,7 @@ erDiagram
         date lastAccessedAt
         date joinedAt
     }
-    
+
     DashboardUser {
         ObjectId id PK
         string email UK
@@ -183,7 +182,7 @@ erDiagram
         boolean isActive
         date lastLoginAt
     }
-    
+
     Tenant {
         ObjectId id PK
         string name
@@ -193,7 +192,7 @@ erDiagram
         string status
         object quotas
     }
-    
+
     Event {
         ObjectId id PK
         ObjectId tenantId FK
@@ -201,7 +200,7 @@ erDiagram
         object properties
         date timestamp
     }
-    
+
     ApiKey {
         ObjectId id PK
         ObjectId tenantId FK
@@ -221,34 +220,34 @@ sequenceDiagram
     participant DB as MongoDB
     participant Q as Queue (JetQueue)
     participant W as Worker
-    
+
     C->>E: POST /api/track<br/>{event, properties}
-    
+
     rect rgb(22, 46, 147)
         Note over E: Rate Limiting Check
         E->>R: Check API Key limits
         R-->>E: Within limits
         E->>E: Validate API Key
     end
-    
+
     E->>A: Forward request with tenant context
     A->>DB: Find Tenant by API Key
     DB-->>A: Tenant found
-    
+
     rect rgb(47, 47, 228)
         Note over A,W: Async Processing
         A->>Q: Add event to queue
         Q-->>A: Acknowledged
         A-->>C: 202 Accepted
     end
-    
+
     Q->>W: Process batch (every 5 sec)
     W->>W: Validate schema
     W->>W: Enrich data (IP, UA)
     W->>DB: Bulk insert events
     W->>R: Update usage metrics
     W->>DB: Update Tenant quotas
-    
+
     Note over C: Response sent immediately
     Note over W,DB: Background processing
 ```
@@ -261,7 +260,7 @@ graph LR
         U1[DashboardUser john@email.com]
         U2[DashboardUser jane@email.com]
     end
-    
+
     subgraph "Workspace A - Acme Inc"
         direction TB
         T1[Tenant acme]
@@ -269,31 +268,27 @@ graph LR
         M2[Membership Jane: Admin]
         D1[(Analytics Data Events, Dashboards)]
     end
-    
+
     subgraph "Workspace B - Beta Corp"
         direction TB
         T2[Tenant beta]
         M3[Membership John: Viewer]
         D2[(Analytics Data)]
     end
-    
+
     U1 --> M1
     U1 --> M3
     U2 --> M2
-    
+
     M1 --> T1
     M2 --> T1
     T1 --> D1
-    
+
     M3 --> T2
     T2 --> D2
-    
+
     style U1 fill:#162E93
     style U2 fill:#162E93
     style T1 fill:#2F2FE4
     style T2 fill:#2F2FE4
 ```
-
-
-
-

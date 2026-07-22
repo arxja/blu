@@ -10,7 +10,7 @@
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/arxja/saasify
+git clone https://github.com/arxja/Blu
 pnpm i
 
 # 2. Environment variables
@@ -22,5 +22,6 @@ cp .env.example .env
 pnpm run setup
 pnpm run dev
 ```
+
 > [!Tip]
 > Check the evn configuration file for the schema [here](../lib/config/index.ts)

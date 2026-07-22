@@ -1,4 +1,4 @@
-# SaaSify Style Guide v1.0
+# Blu Style Guide v1.0
 
 ## 🎨 Color System Architecture
 
