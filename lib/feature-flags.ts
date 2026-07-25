@@ -10,12 +10,7 @@ import { log } from "./logger";
  * All boolean feature flags - both server-only and client-safe
  * This array will be extended when a new flag comes
  */
-const FEATURE_FLAGS = [
-  "ENABLE_WEBHOOKS",
-  "ENABLE_EMAIL",
-  "NEXT_PUBLIC_DEMO_MODE",
-  "NEXT_PUBLIC_FEATURE_NEW_DASHBOARD",
-] as const;
+const FEATURE_FLAGS = ["NEXT_PUBLIC_DEMO_MODE"] as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number];
 
@@ -35,27 +30,30 @@ export function isEnable(
   flag: FeatureFlag,
   overrides?: Partial<Record<FeatureFlag, boolean>>,
 ): boolean {
-  // 1. Overrides take highest priority
-  if (overrides && flag in overrides) {
-    return overrides[flag]!;
-  }
-
   const isClient = typeof window !== "undefined";
 
-  if (flag.startsWith("NEXT_PUBLIC_")) {
-    // Client-safe flag - client is accessible everywhere
-    return (clientConfig as Record<string, unknown>)[flag] === "true";
-  }
-
-  if (isClient) {
+  // 1. Client‑side: server‑only flags always return false (overrides ignored)
+  if (isClient && !flag.startsWith("NEXT_PUBLIC_")) {
     if (serverConfig.NODE_ENV === "development") {
       log.warn(
-        `Server-only flag "${flag}" was read on the client. Returning false.`,
+        `Server‑only flag "${flag}" was read on the client. Returning false.`,
       );
     }
     return false;
   }
-  // On the server we can safely access serverConfig
+
+  // 2. Overrides take highest priority (server‑side for any flag, client‑side only for NEXT_PUBLIC_ flags)
+  if (overrides && flag in overrides) {
+    return overrides[flag]!;
+  }
+
+  // 3. Fallback to configuration
+  if (flag.startsWith("NEXT_PUBLIC_")) {
+    // Client‑safe flag – value is now a boolean (schema transform)
+    return !!(clientConfig as Record<string, unknown>)[flag];
+  }
+
+  // 4. Server‑only flag on the server (isClient === false here)
   return (serverConfig as Record<string, unknown>)[flag] === "true";
 }
 
@@ -70,9 +68,7 @@ export function getFlag(
 
   if (!key.startsWith("NEXT_PUBLIC_") && isClient) {
     if (serverConfig.NODE_ENV === "development") {
-      log.warn(
-        `Server‑only key “${key}” accessed on the client.`,
-      );
+      log.warn(`Server‑only key “${key}” accessed on the client.`);
     }
     return undefined;
   }
