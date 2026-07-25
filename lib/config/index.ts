@@ -32,6 +32,7 @@ const clientSchema = z.object({
     .transform((v) => v === "true"),
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
   NEXT_PUBLIC_STRIPE_CHECKOUT_URL: z.string(),
+  NEXT_PUBLIC_DEMO_MODE: z.string(),
 });
 
 export type ServerConfig = z.infer<typeof serverSchema>;
