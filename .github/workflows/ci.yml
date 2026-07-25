@@ -50,6 +50,7 @@ jobs:
           NEXT_PUBLIC_API_URL: "/api"
           NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
           NEXT_PUBLIC_STRIPE_CHECKOUT_URL: "https://checkout.stripe.com"
+          NEXT_PUBLIC_DEMO_MODE: "false"
       
   build:
     runs-on: ubuntu-latest
@@ -95,3 +96,4 @@ jobs:
           NEXT_PUBLIC_API_URL: "/api"
           NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
           NEXT_PUBLIC_STRIPE_CHECKOUT_URL: "https://checkout.stripe.com"
+          NEXT_PUBLIC_DEMO_MODE: "false"
