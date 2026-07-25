@@ -1,6 +1,6 @@
 "use client";
 
-import { clientConfig } from "@/lib/config";
+import { clientConfig } from "@/lib/config/config-client";
 import { useMemo } from "react";
 
 /**
@@ -13,7 +13,6 @@ import { useMemo } from "react";
 export function useFeatureFlags() {
   const flags = useMemo(
     () => ({
-      // newDashboard: clientConfig.NEXT_PUBLIC_FEATURE_NEW_DASHBOARD,
       demoMode: clientConfig.NEXT_PUBLIC_DEMO_MODE,
     }),
     [], // empty deps – flags are static for the whole session
