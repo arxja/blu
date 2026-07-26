@@ -93,6 +93,7 @@ const Navbar = () => {
             </div>
 
             {/* User area */}
+            {/* todo: add user avatar or profile link */}
             {user ? (
               <div className="h-8 w-8 rounded-full bg-primary-500/20 ring-2 ring-primary-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500" />
             ) : (
