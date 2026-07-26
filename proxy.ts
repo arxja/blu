@@ -5,8 +5,8 @@ import { verifyJWT } from "@/lib/auth/jwt";
 const publicRoutes = [
   "/sign-in",
   "/sign-up",
-  "/api/sign-in",
-  "/api/sign-up",
+  "/api/auth/sign-in",
+  "/api/auth/sign-up",
   "/pricing",
 ];
 

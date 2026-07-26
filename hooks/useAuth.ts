@@ -23,7 +23,7 @@ export function useAuth() {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const res = await fetch("/api/sign-in", {
+    const res = await fetch("/api/auth/sign-in", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -38,7 +38,7 @@ export function useAuth() {
   };
 
   const signUp = async (name: string, email: string, password: string) => {
-    const res = await fetch("/api/sign-up", {
+    const res = await fetch("/api/auth/sign-up", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
@@ -53,7 +53,7 @@ export function useAuth() {
   };
 
   const signOut = async () => {
-    await fetch("/api/sign-out", { method: "POST" });
+    await fetch("/api/auth/sign-out", { method: "POST" });
     setUser(null);
   };
 
