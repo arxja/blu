@@ -15,7 +15,13 @@ export async function GET() {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
+import { log } from "`@/lib/logger`";
+import { connectDB } from "`@/lib/database/mongoose`";
+
+...
+
   try {
+    await connectDB();
     const user = await dashboardUserModel
       .findById(payload.userId)
       .select("-passwordHash");
