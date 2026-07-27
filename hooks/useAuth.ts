@@ -12,15 +12,23 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.user) setUser(data.user);
-      })
-      .catch(() => setUser(null))
-      .finally(() => setIsLoading(false));
-  }, []);
+useEffect(() => {
+  fetch("/api/auth/me")
+    .then(async (res) => {
+      if (res.status === 401) {
+        setUser(null);
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch user");
+      const data = await res.json();
+      if (data.user) setUser(data.user);
+    })
+    .catch((error) => {
+      console.error("Auth check failed:", error);
+      setUser(null);
+    })
+    .finally(() => setIsLoading(false));
+}, []);
 
   const signIn = async (email: string, password: string) => {
     const res = await fetch("/api/auth/sign-in", {
