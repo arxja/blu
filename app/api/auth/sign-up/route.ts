@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import dashboardUserModel from "@/lib/database/models/dashboardUser.model";
 import { signJWT } from "@/lib/auth/jwt";
+import { connectDB } from "@/lib/database/mongoose";
 
 const signUpSchema = z.object({
   email: z.string().email(),
@@ -27,6 +28,8 @@ export async function POST(req: NextRequest) {
 
     const { email, name, password } = parsed.data;
     const normalizedEmail = email.toLowerCase();
+
+    await connectDB();
 
     const existing = await dashboardUserModel.findOne({
       email: normalizedEmail,

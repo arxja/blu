@@ -12,18 +12,26 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.user) setUser(data.user);
-      })
-      .catch(() => setUser(null))
-      .finally(() => setIsLoading(false));
-  }, []);
+useEffect(() => {
+  fetch("/api/auth/me")
+    .then(async (res) => {
+      if (res.status === 401) {
+        setUser(null);
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch user");
+      const data = await res.json();
+      if (data.user) setUser(data.user);
+    })
+    .catch((error) => {
+      console.error("Auth check failed:", error);
+      setUser(null);
+    })
+    .finally(() => setIsLoading(false));
+}, []);
 
   const signIn = async (email: string, password: string) => {
-    const res = await fetch("/api/sign-in", {
+    const res = await fetch("/api/auth/sign-in", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -38,7 +46,7 @@ export function useAuth() {
   };
 
   const signUp = async (name: string, email: string, password: string) => {
-    const res = await fetch("/api/sign-up", {
+    const res = await fetch("/api/auth/sign-up", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
@@ -53,7 +61,7 @@ export function useAuth() {
   };
 
   const signOut = async () => {
-    await fetch("/api/sign-out", { method: "POST" });
+    await fetch("/api/auth/sign-out", { method: "POST" });
     setUser(null);
   };
 

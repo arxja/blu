@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import dashboardUserModel from "@/lib/database/models/dashboardUser.model";
+import DashboardUser from "@/lib/database/models/dashboardUser.model";
 import membershipModel from "@/lib/database/models/membership.model";
 import { signJWT } from "@/lib/auth/jwt";
+import { connectDB } from "@/lib/database/mongoose";
 import { Types } from "mongoose";
 
 interface PopulatedMembership {
@@ -37,7 +38,9 @@ export async function POST(req: NextRequest) {
     const { email, password } = parsed.data;
     const normalizedEmail = email.toLowerCase();
 
-    const user = await dashboardUserModel.findOne({ email: normalizedEmail });
+    await connectDB();
+
+    const user = await DashboardUser.findOne({ email: normalizedEmail });
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
       role: m.role,
     }));
 
-    await dashboardUserModel.updateOne(
+    await DashboardUser.updateOne(
       { _id: user._id },
       { lastLoginAt: new Date() },
     );

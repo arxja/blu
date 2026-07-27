@@ -5,8 +5,9 @@ import { verifyJWT } from "@/lib/auth/jwt";
 const publicRoutes = [
   "/sign-in",
   "/sign-up",
-  "/api/sign-in",
-  "/api/sign-up",
+  "/api/auth/sign-in",
+  "/api/auth/sign-up",
+  "/api/auth/sign-out",
   "/pricing",
 ];
 
@@ -29,7 +30,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (publicRoutes.some((route) => pathname.startsWith(route))) {
+  if (
+    publicRoutes.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
+    )
+  ) {
     return NextResponse.next();
   }
 
