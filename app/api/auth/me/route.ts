@@ -15,7 +15,13 @@ export async function GET() {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
+import { log } from "`@/lib/logger`";
+import { connectDB } from "`@/lib/database/mongoose`";
+
+...
+
   try {
+    await connectDB();
     const user = await dashboardUserModel
       .findById(payload.userId)
       .select("-passwordHash");
@@ -24,7 +30,13 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ user });
+    return NextResponse.json({
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+      },
+    });
   } catch (error) {
     if (error instanceof AppError) {
       log.error("Database error in /api/auth/me", error);
