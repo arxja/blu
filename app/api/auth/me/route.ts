@@ -3,6 +3,7 @@ import { getAuthToken, verifyJWT } from "@/lib/auth/jwt";
 import dashboardUserModel from "@/lib/database/models/dashboardUser.model";
 import { AppError } from "@/lib/errors";
 import { log } from "@/lib/logger";
+import { connectDB } from "@/lib/database/mongoose";
 
 export async function GET() {
   const token = await getAuthToken();
@@ -14,12 +15,6 @@ export async function GET() {
   if (!payload) {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
-
-import { log } from "`@/lib/logger`";
-import { connectDB } from "`@/lib/database/mongoose`";
-
-...
-
   try {
     await connectDB();
     const user = await dashboardUserModel
