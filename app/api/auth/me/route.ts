@@ -30,7 +30,13 @@ import { connectDB } from "`@/lib/database/mongoose`";
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ user });
+    return NextResponse.json({
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+      },
+    });
   } catch (error) {
     if (error instanceof AppError) {
       log.error("Database error in /api/auth/me", error);
