@@ -63,28 +63,6 @@
       background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
       color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-    /* Shadcn UI Variables - Using Custom Theme */
-    --background: var(--color-canvas);
-    --foreground: var(--color-text-primary);
-    --card: var(--color-card);
-    --card-foreground: var(--color-text-primary);
-    --popover: var(--color-surface);
-    --popover-foreground: var(--color-text-primary);
-    --primary: var(--color-primary-500);
-    --primary-foreground: #ffffff;
-    --secondary: var(--color-surface-elevated);
-    --secondary-foreground: var(--color-text-secondary);
-    --muted: var(--color-surface-elevated);
-    --muted-foreground: var(--color-text-tertiary);
-    --accent: var(--color-primary-50);
-    --accent-foreground: var(--color-primary-700);
-    --destructive: var(--color-error);
-    --destructive-foreground: #ffffff;
-    --border: var(--color-border-default);
-    --input: var(--color-border-default);
-    --ring: var(--color-primary-400);
-    --radius: 0.625rem;
   }
 
   /* Dark Mode Tokens */
@@ -124,29 +102,7 @@
     --shadow-md: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
     --shadow-lg:
       0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
-
-    /* Shadcn UI Variables - Dark Mode */
-    --background: var(--color-canvas);
-    --foreground: var(--color-text-primary);
-    --card: var(--color-card);
-    --card-foreground: var(--color-text-primary);
-    --popover: var(--color-surface);
-    --popover-foreground: var(--color-text-primary);
-    --primary: var(--color-primary-500);
-    --primary-foreground: #0a0a0f;
-    --secondary: var(--color-surface-elevated);
-    --secondary-foreground: var(--color-text-secondary);
-    --muted: var(--color-surface-elevated);
-    --muted-foreground: var(--color-text-tertiary);
-    --accent: var(--color-primary-900);
-    --accent-foreground: var(--color-primary-200);
-    --destructive: var(--color-error);
-    --destructive-foreground: #ffffff;
-    --border: var(--color-border-default);
-    --input: var(--color-border-default);
-    --ring: var(--color-primary-400);
   }
-
   * {
     @apply border-border outline-ring/50;
   }
@@ -329,4 +285,73 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: var(--color-canvas);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-card);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-primary-500);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-surface-elevated);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-surface-elevated);
+  --muted-foreground: var(--color-text-secondary);
+  --accent: var(--color-primary-50);
+  --accent-foreground: var(--color-primary-700);
+  --destructive: var(--color-error);
+  --border: var(--color-border-light);
+  --input: var(--color-border-default);
+  --ring: var(--color-primary-500);
+  --chart-1: var(--color-chart-1);
+  --chart-2: var(--color-chart-2);
+  --chart-3: var(--color-chart-3);
+  --chart-4: var(--color-chart-4);
+  --chart-5: var(--color-chart-5);
+  --radius: 0.625rem;
+  --sidebar: var(--color-surface);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-primary: var(--color-primary-500);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--color-primary-50);
+  --sidebar-accent-foreground: var(--color-primary-700);
+  --sidebar-border: var(--color-border-light);
+  --sidebar-ring: var(--color-primary-500);
+}
+
+.dark {
+  --background: var(--color-canvas);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-card);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-primary-500);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-surface-elevated);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-surface-elevated);
+  --muted-foreground: var(--color-text-secondary);
+  --accent: var(--color-primary-100);
+  --accent-foreground: var(--color-primary-700);
+  --destructive: var(--color-error);
+  --border: var(--color-border-light);
+  --input: var(--color-border-default);
+  --ring: var(--color-primary-400);
+  --chart-1: var(--color-chart-1);
+  --chart-2: var(--color-chart-2);
+  --chart-3: var(--color-chart-3);
+  --chart-4: var(--color-chart-4);
+  --chart-5: var(--color-chart-5);
+  --sidebar: var(--color-surface);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-primary: var(--color-primary-500);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--color-primary-100);
+  --sidebar-accent-foreground: var(--color-primary-700);
+  --sidebar-border: var(--color-border-light);
+  --sidebar-ring: var(--color-primary-400);
 }
