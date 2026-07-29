@@ -26,6 +26,17 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const subdomain = getSubdomain(request);
 
+  const token = request.cookies.get("auth_token")?.value;
+  let payload = null;
+  if (token) {
+    payload = verifyJWT(token);
+  }
+
+  if (payload && ["/sign-in", "/sign-up"].includes(pathname)) {
+    const dashboardUrl = new URL("/dashboard", request.url);
+    return NextResponse.redirect(dashboardUrl);
+  }
+
   if (pathname === "/") {
     return NextResponse.next();
   }
@@ -36,12 +47,6 @@ export async function proxy(request: NextRequest) {
     )
   ) {
     return NextResponse.next();
-  }
-
-  const token = request.cookies.get("auth_token")?.value;
-  let payload = null;
-  if (token) {
-    payload = verifyJWT(token);
   }
 
   if (!payload) {

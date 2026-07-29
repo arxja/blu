@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 interface User {
   id: string;
@@ -8,27 +15,68 @@ interface User {
   name: string;
 }
 
-export function useAuth() {
+interface AuthContextValue {
+  user: User | null;
+  isLoading: boolean;
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  signUp: (
+    name: string,
+    email: string,
+    password: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-useEffect(() => {
-  fetch("/api/auth/me")
-    .then(async (res) => {
-      if (res.status === 401) {
-        setUser(null);
-        return;
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+
+        if (res.status === 401) {
+          if (isMounted) {
+            setUser(null);
+          }
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch user");
+        }
+
+        const data = await res.json();
+
+        if (isMounted) {
+          setUser(data.user ?? null);
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      if (!res.ok) throw new Error("Failed to fetch user");
-      const data = await res.json();
-      if (data.user) setUser(data.user);
-    })
-    .catch((error) => {
-      console.error("Auth check failed:", error);
-      setUser(null);
-    })
-    .finally(() => setIsLoading(false));
-}, []);
+    };
+
+    void loadUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     const res = await fetch("/api/auth/sign-in", {
@@ -39,9 +87,10 @@ useEffect(() => {
 
     if (res.ok) {
       const data = await res.json();
-      setUser(data.user);
+      setUser(data.user ?? null);
       return { success: true };
     }
+
     return { success: false, error: "Invalid credentials" };
   };
 
@@ -54,16 +103,34 @@ useEffect(() => {
 
     if (res.ok) {
       const data = await res.json();
-      setUser(data.user);
+      setUser(data.user ?? null);
       return { success: true };
     }
+
     return { success: false, error: "Sign up failed" };
   };
 
   const signOut = async () => {
-    await fetch("/api/auth/sign-out", { method: "POST" });
-    setUser(null);
+    try {
+      await fetch("/api/auth/sign-out", { method: "POST" });
+    } finally {
+      setUser(null);
+    }
   };
 
-  return { user, isLoading, signIn, signUp, signOut };
+  return createElement(
+    AuthContext.Provider,
+    { value: { user, isLoading, signIn, signUp, signOut } },
+    children,
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+
+  return context;
 }
