@@ -10,8 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Blu",
-  description: "Multi-Tenant SaaS Starter Kit",
+  title: "Blu — Turn user behavior into business actions",
+  description:
+    "Blu is the all-in-one B2B SaaS platform that transforms user behavior into automated business actions in a single multi-tenant system.",
 };
 
 export default function RootLayout({
