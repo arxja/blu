@@ -1,5 +1,5 @@
-import { SignInForm } from "@/components//SignInForm";
-import { AuthCard } from "@/components//AuthCard";
+import { SignInForm } from "@/components/pages/auth/SignInForm";
+import { AuthCard } from "@/components/pages/auth/AuthCard";
 
 export default function SignInPage() {
   return (
