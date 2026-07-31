@@ -7,7 +7,6 @@ import { useGSAP } from "@gsap/react";
 import type { Plan } from "@/lib/constants";
 import PricingContent from "./PricingContent";
 import PricingHero from "./PricingHero";
-import { clientConfig } from "@/lib/config";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
