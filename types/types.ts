@@ -3,6 +3,12 @@ export interface NavItemsTypes {
   link: string;
 }
 
+
+export interface FooterItemsType {
+  heading: string;
+  links: NavItemsTypes[]
+}
+
 export interface WebhookEvent {
   id: string;
   type: string;

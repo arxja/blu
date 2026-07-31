@@ -1,5 +1,3 @@
-import { NavItemsTypes } from "@/types/types";
-
 export const PLANS = [
   {
     id: "free",
@@ -103,18 +101,3 @@ export const PLANS_BY_ID = PLANS.reduce(
 export const getPlanById = (id: string): Plan | undefined => {
   return PLANS_BY_ID[id as PlanId];
 };
-
-export const NAVBAR_ITEMS: NavItemsTypes[] = [
-  {
-    name: "Pricing",
-    link: "/pricing",
-  },
-  {
-    name: "About",
-    link: "/#",
-  },
-  {
-    name: "Contact",
-    link: "/#",
-  },
-];

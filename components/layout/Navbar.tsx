@@ -1,8 +1,8 @@
 import { NAVBAR_ITEMS } from "@/lib/constants";
-import { Logo } from "../features/navbar";
-import { NavLinks } from "../features/navbar";
-import { UserSection } from "../features/navbar";
-import { ScrollController } from "../features/navbar";
+import { Logo } from "./navbar/index";
+import { NavLinks } from "./navbar/index";
+import { UserSection } from "./navbar/index";
+import { ScrollController } from "./navbar/index";
 
 export default function Navbar() {
   return (

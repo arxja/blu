@@ -1,14 +1,23 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
 export function AuthButton() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   if (user) {
     return (
-      <div className="h-8 w-8 rounded-full bg-primary-500/20 ring-2 ring-primary-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500" />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => void signOut()}
+        className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+      >
+        Sign out
+      </Button>
     );
   }
 
