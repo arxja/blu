@@ -1,7 +1,7 @@
 import { getAuthToken, verifyJWT } from "@/lib/auth/jwt";
 import { connectDB } from "@/lib/database/mongoose";
 import DashboardUser from "@/lib/database/models/dashboardUser.model";
-import { log, logger } from "../logger";
+import { log } from "../logger";
 import { AppError } from "../errors";
 
 export async function getCurrentUser() {
@@ -28,9 +28,15 @@ export async function getCurrentUser() {
     if (!user.isActive) {
       throw AppError.forbidden("User account is disabled");
     }
+
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+    };
   } catch (error) {
     if (error instanceof AppError) throw error;
     log.error("Failed to get current user", error as Error);
-    throw AppError.internal("Authentication error")
+    throw AppError.internal("Authentication error");
   }
 }
