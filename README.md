@@ -97,7 +97,7 @@ flowchart TB
 |-------------------|-----------------------------------|
 | Frontend          | Next.js 16, React 19, TailwindCSS |
 | Backend           | Next.js API Routes, Node.js       |
-| Database          | MongoDB Atlas (multi‑tenant)      |
+| Database          | MongoDB Atlas (multi‑tenant) + SQL for events      |
 | Queue             | JetQueue (in‑memory for demo)     |
 | Real‑time         | Server‑Sent Events (SSE)          |
 | Deployment        | Vercel (serverless)               |
@@ -175,7 +175,7 @@ MIT © Blu Analytics
 
 ## 🔗 Links
 
-- **Live Demo (coming soon):** will be at [blu-analytics.vercel.app](https://blu-analytics.vercel.app)
+- **Live Demo (coming soon):** will be online very soon
 - **Documentation:** [docs.blu.dev](https://docs.blu.dev) (in progress)
 <!-- - **Community:** [Discord](https://discord.gg/blu) (join to follow progress) -->
 
