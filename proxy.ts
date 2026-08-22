@@ -57,11 +57,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (subdomain) {
-    if (!payload.tenantId) {
-      const dashboardUrl = new URL("/dashboard", request.url);
-      return NextResponse.redirect(dashboardUrl);
-    }
+  if(subdomain) {
+    // Rewrite {subdomain}.blu.so/* -> /w/{subdomain}/*
+    const newPath = `/w/${subdomain}${pathname === '/' ? '' : pathname}`;
+    const rewriteUrl = new URL(newPath, request.url);
+    const rewriteResponse = NextResponse.rewrite(rewriteUrl);
+    rewriteResponse.headers.set("x-subdomain", subdomain);
+    return rewriteResponse;
   }
 
   return NextResponse.next();
