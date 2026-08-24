@@ -58,7 +58,6 @@ const TenantSchema = new Schema<ITenant>(
 );
 
 // Indexes
-TenantSchema.index({ subdomain: 1 }, { unique: true });
 TenantSchema.index({ ownerId: 1 });
 TenantSchema.index({ stripeCustomerId: 1 });
 
