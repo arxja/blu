@@ -13,7 +13,7 @@ import Link from "next/link";
 
 interface TenantCardsProps {
   tenant: {
-    logo: string;
+    logo?: string;
     name: string;
     slug: string;
     role: string;
@@ -22,66 +22,69 @@ interface TenantCardsProps {
 }
 
 const TenantCards = ({ tenant }: TenantCardsProps) => {
+  const formattedRole = tenant.role
+    ? tenant.role.charAt(0).toUpperCase() + tenant.role.slice(1)
+    : "Member";
+
   const chooseBadgeColor = (role: string) => {
-    const rle = role.toLowerCase();
-    switch (rle) {
+    const normalizedRole = role.toLowerCase();
+    switch (normalizedRole) {
       case "owner":
-        return "bg-green-500 text-white p-3";
+        return "bg-emerald-500 text-white";
       case "admin":
-        return "bg-blue-500 text-white p-3";
-      case "user":
-        return "bg-gray-500 text-white p-3";
+        return "bg-blue-500 text-white";
+      case "analyst":
+        return "bg-violet-500 text-white";
+      case "viewer":
+        return "bg-slate-500 text-white";
       default:
-        return "bg-gray-500 text-white p-3";
+        return "bg-slate-500 text-white";
     }
   };
+
   return (
-    <Card className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition flex flex-col ">
-      <CardHeader className="flex flex-row justify-between items-center">
-        <div className="flex flex-row justify-between">
+    <Card className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow duration-200 hover:shadow-md">
+      <CardHeader className="flex flex-row items-center justify-between gap-3 p-0 pb-4">
+        <div className="flex items-center gap-3">
           {tenant.logo ? (
             <Image
               src={tenant.logo}
               alt={tenant.name}
-              className="w-16 h-16 object-contain"
+              className="h-12 w-12 rounded-xl object-cover ring-1 ring-slate-200"
             />
           ) : (
-            <div className="bg-gray-200 border border-gray-300 rounded-lg w-16 h-16 flex items-center justify-center">
-              <span className="text-lg font-bold text-primary">
-                {tenant.name.charAt(0)}
-              </span>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-lg font-bold text-slate-700 ring-1 ring-slate-300">
+              {tenant.name.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
-        <Badge
-          variant={"outline"}
-          className={`${chooseBadgeColor(tenant.role)}`}
-        >
-          {tenant.role}
+        <Badge variant="outline" className={chooseBadgeColor(tenant.role)}>
+          {formattedRole}
         </Badge>
       </CardHeader>
-      <CardContent className="gap-0">
-        <CardTitle className="text-2xl">{tenant.name}</CardTitle>
-        <div className="flex items-center">
-          <CardDescription className="text-lg text-gray-500">{`${tenant.slug}.blu.so`}</CardDescription>
-        </div>
+
+      <CardContent className="flex-1 p-0">
+        <CardTitle className="text-xl font-semibold text-slate-900">
+          {tenant.name}
+        </CardTitle>
+        <CardDescription className="mt-2 text-sm text-slate-500">
+          {`${tenant.slug}.blu.so`}
+        </CardDescription>
       </CardContent>
-      <CardFooter className="block">
-        <div className="flex flex-row gap-2">
-          <div className="flex flex-row items-center gap-1">
-            <Users size={16} />
-            <span>{tenant.members} Members</span>
-          </div>
+
+      <CardFooter className="mt-4 block p-0">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <Users size={16} />
+          <span>{tenant.members} Members</span>
         </div>
-        <div className="flex flex-row items-center justify-center gap-1 rounded-lg bg-gray-200 p-2 mt-2">
-          <Link
-            className="flex flex-row items-center"
-            href={`${tenant.slug}.blu.so`}
-          >
-            Launch Workspace
-          </Link>
+
+        <Link
+          href={`https://${tenant.slug}.blu.so`}
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700"
+        >
+          <span>Launch Workspace</span>
           <ArrowRight size={16} />
-        </div>
+        </Link>
       </CardFooter>
     </Card>
   );
