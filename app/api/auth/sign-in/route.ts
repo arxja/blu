@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import DashboardUser from "@/lib/database/models/dashboardUser.model";
+import Tenant from "@/lib/database/models/tenant.model";
 import membershipModel from "@/lib/database/models/membership.model";
 import { signJWT } from "@/lib/auth/jwt";
 import { connectDB } from "@/lib/database/mongoose";
@@ -12,7 +13,7 @@ interface PopulatedMembership {
   userId: Types.ObjectId;
   tenantId: {
     _id: Types.ObjectId;
-    name: string;
+    companyName: string;
     subdomain: string;
   };
   role: "owner" | "admin" | "analyst" | "viewer";
@@ -59,13 +60,21 @@ export async function POST(req: NextRequest) {
     const memberships = (await membershipModel
       .find({ userId: user._id, isActive: true })
       .populate<{
-        tenantId: { _id: Types.ObjectId; name: string; subdomain: string };
-      }>("tenantId")
+        tenantId: {
+          _id: Types.ObjectId;
+          companyName: string;
+          subdomain: string;
+        };
+      }>({
+        path: "tenantId",
+        model: Tenant,
+        select: "companyName subdomain",
+      })
       .lean()) as unknown as PopulatedMembership[];
 
     const workspaces = memberships.map((m) => ({
       id: m.tenantId._id.toString(),
-      name: m.tenantId.name,
+      name: m.tenantId.companyName,
       subdomain: m.tenantId.subdomain,
       role: m.role,
     }));
