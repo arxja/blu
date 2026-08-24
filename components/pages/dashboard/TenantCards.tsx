@@ -50,6 +50,8 @@ const TenantCards = ({ tenant }: TenantCardsProps) => {
             <Image
               src={tenant.logo}
               alt={tenant.name}
+              width={48}
+              height={48}
               className="h-12 w-12 rounded-xl object-cover ring-1 ring-slate-200"
             />
           ) : (

@@ -29,17 +29,19 @@ export function AuthButton() {
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {USER_DROPDOWN_ITEMS.map((group) => (
-              <DropdownMenuGroup key={group.groupName}>
-                <DropdownMenuLabel>{group.groupName}</DropdownMenuLabel>
-                {group.items.map((item) => (
-                  <DropdownMenuItem key={item.name}>
-                    <Link href={item.link}>{item.name}</Link>
-                  </DropdownMenuItem>
-                ))}
+            <DropdownMenuGroup key={group.groupName}>
+              <DropdownMenuLabel>{group.groupName}</DropdownMenuLabel>
+              {group.items.map((item) => (
+                <DropdownMenuItem key={item.name}>
+                  <Link href={item.link}>{item.name}</Link>
+                </DropdownMenuItem>
+              ))}
               <DropdownMenuSeparator />
-              </DropdownMenuGroup>
+            </DropdownMenuGroup>
           ))}
-          <DropdownMenuItem className="text-red-500" onClick={signOut}>Sign Out</DropdownMenuItem>
+          <DropdownMenuItem className="text-red-500" onClick={signOut}>
+            Sign Out
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );
