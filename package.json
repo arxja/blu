@@ -15,7 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "test:changed": "vitest --related --watch",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "seed": "bun run scripts/seed.ts"
+    "seed": "npx tsx scripts/seed.ts"
   },
   "dependencies": {
     "@arcjet/inspect": "^1.9.1",

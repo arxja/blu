@@ -11,7 +11,7 @@ import Event from "@/lib/database/models/event.model";
 import Dashboard from "@/lib/database/models/dashboard.model";
 import Report from "@/lib/database/models/report.model";
 import Invitation from "@/lib/database/models/invitation.model";
-import { serverConfig } from "@/lib/config";
+import { connectDB } from "@/lib/database/mongoose";
 
 // ========== Helper: generate API keys ==========
 function generateApiKey() {
@@ -71,8 +71,31 @@ async function seed() {
     process.exit(1);
   }
 
-  await mongoose.connect(serverConfig.DATABASE_URL);
-  console.log("📦 Connected to MongoDB");
+  try {
+    await connectDB();
+    console.log("📦 Connected to MongoDB");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const databaseUrl = process.env.DATABASE_URL || "<not set>";
+    const sanitizedUrl = databaseUrl.includes("@")
+      ? (() => {
+          const [prefix, suffix] = databaseUrl.split("://");
+          const [, rest] = (suffix ?? "").split("@");
+          return `${prefix}://***:***@${rest ?? ""}`;
+        })()
+      : databaseUrl;
+
+    console.error("❌ MongoDB connection failed.");
+    console.error(
+      "This usually means the configured Atlas/remote cluster is unreachable from this machine or not allowed by network access.",
+    );
+    console.error(
+      "For local development, start MongoDB and set DATABASE_URL=mongodb://127.0.0.1:27017/Blu",
+    );
+    console.error(`Configured DATABASE_URL: ${sanitizedUrl}`);
+    console.error(message);
+    process.exit(1);
+  }
 
   // 1. Clear all collections
   console.log("🧹 Clearing existing data...");
@@ -89,7 +112,7 @@ async function seed() {
   console.log("✅ Cleared\n");
 
   // 2. Create global users (no tenantId, no role)
-  const passwordHash = await bcrypt.hash("Test123!", 10);
+  const passwordHash = await bcrypt.hash("Test12341234", 10);
 
   const [ownerUser, adminUser, analystUser, viewerUser] =
     await DashboardUser.create([
@@ -125,6 +148,8 @@ async function seed() {
     companyName: "Demo Workspace",
     subdomain: "demo",
     ownerId: ownerUser._id,
+    members: 4,
+    logo: "",
     plan: "free",
     status: "active",
     billingEmail: ownerUser.email,
@@ -136,7 +161,7 @@ async function seed() {
     },
   });
   console.log(
-    `🏢 Created tenant: ${tenant.name} (${tenant.subdomain}.localhost:3000)`,
+    `🏢 Created tenant: ${tenant.companyName} (${tenant.subdomain}.localhost:3000)`,
   );
 
   // 4. Create memberships (user -> tenant + role)
@@ -274,7 +299,7 @@ async function seed() {
   console.log("✉️ Created 1 invitation");
 
   console.log("\n🎉 SEED COMPLETED SUCCESSFULLY!");
-  console.log("\n🔐 Test Logins (password: Test123!):");
+  console.log("\n🔐 Test Logins (password: Test12341234):");
   console.log("   Owner:   owner@example.com   (role: owner)");
   console.log("   Admin:   admin@example.com   (role: admin)");
   console.log("   Analyst: analyst@example.com (role: analyst)");
