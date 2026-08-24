@@ -4,6 +4,8 @@ export interface ITenant extends mongoose.Document {
   companyName: string;
   subdomain: string;
   ownerId: mongoose.Types.ObjectId;
+  members: number;
+  logo: string;
   plan: "free" | "pro" | "enterprise";
   status: "active" | "trialing" | "past_due" | "suspended";
   billingEmail: string;
@@ -29,6 +31,8 @@ const TenantSchema = new Schema<ITenant>(
       required: true,
       ref: "DashboardUser",
     },
+    members: { type: Number, default: 1, min: 1 },
+    logo: { type: String, default: "" },
     plan: {
       type: String,
       enum: ["free", "pro", "enterprise"],
