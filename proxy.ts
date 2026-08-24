@@ -37,7 +37,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl);
   }
 
-  if (pathname === "/") {
+  // Only bypass the proxy for the absolute root when there is no subdomain.
+  if (pathname === "/" && !subdomain) {
     return NextResponse.next();
   }
 
@@ -57,9 +58,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if(subdomain) {
-    // Rewrite {subdomain}.blu.so/* -> /w/{subdomain}/*
-    const newPath = `/w/${subdomain}${pathname === '/' ? '' : pathname}`;
+  if (subdomain) {
+    // Preserve x-subdomain header for downstream consumption.
+    // Rewrite subdomain root and paths to an established route (dashboard)
+    // so the rewrite target resolves to an existing route in the app.
+    const newPath = `/dashboard${pathname === "/" ? "" : pathname}`;
     const rewriteUrl = new URL(newPath, request.url);
     const rewriteResponse = NextResponse.rewrite(rewriteUrl);
     rewriteResponse.headers.set("x-subdomain", subdomain);
