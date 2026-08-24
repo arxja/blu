@@ -22,9 +22,7 @@ const DashboardUserSchema = new Schema<IDashboardUser>(
 );
 
 // Indexes
-DashboardUserSchema.index({ tenantId: 1, email: 1 }, { unique: true });
 DashboardUserSchema.index({ email: 1 });
-DashboardUserSchema.index({ tenantId: 1, role: 1 });
 
 export default models.DashboardUser ||
   model<IDashboardUser>("DashboardUser", DashboardUserSchema);

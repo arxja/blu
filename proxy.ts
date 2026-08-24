@@ -37,7 +37,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl);
   }
 
-  if (pathname === "/") {
+  // Only bypass the proxy for the absolute root when there is no subdomain.
+  if (pathname === "/" && !subdomain) {
     return NextResponse.next();
   }
 
@@ -58,10 +59,14 @@ export async function proxy(request: NextRequest) {
   }
 
   if (subdomain) {
-    if (!payload.tenantId) {
-      const dashboardUrl = new URL("/dashboard", request.url);
-      return NextResponse.redirect(dashboardUrl);
-    }
+    // Preserve x-subdomain header for downstream consumption.
+    // Rewrite subdomain root and paths to an established route (dashboard)
+    // so the rewrite target resolves to an existing route in the app.
+    const newPath = `/dashboard${pathname === "/" ? "" : pathname}`;
+    const rewriteUrl = new URL(newPath, request.url);
+    const rewriteResponse = NextResponse.rewrite(rewriteUrl);
+    rewriteResponse.headers.set("x-subdomain", subdomain);
+    return rewriteResponse;
   }
 
   return NextResponse.next();

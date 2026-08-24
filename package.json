@@ -15,7 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "test:changed": "vitest --related --watch",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "seed": "bun run scripts/seed.ts"
+    "seed": "npx tsx scripts/seed.ts"
   },
   "dependencies": {
     "@arcjet/inspect": "^1.9.1",
@@ -23,6 +23,7 @@
     "@base-ui/react": "^1.6.0",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.4.0",
+    "@upstash/redis": "^1.38.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",

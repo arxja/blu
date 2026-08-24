@@ -8,8 +8,6 @@ const JWT_EXPIRES_IN = "7d";
 export interface JWTPayload {
   userId: string;
   email: string;
-  tenantId?: string;
-  role?: string;
 }
 
 export function signJWT(payload: JWTPayload): string {

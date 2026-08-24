@@ -14,7 +14,6 @@ const serverSchema = z.object({
   DATABASE_URL: z.string(),
   JWT_SECRET: z.string().min(32),
   STRIPE_SECRET_KEY: z.string().startsWith("sk_"),
-  REDIS_URL: z.string().url().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   NODE_ENV: z.enum(["development", "staging", "production", "test", "ci"]),
@@ -26,6 +25,8 @@ const serverSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
   ARCJET_KEY: z.string().min(1),
   ARCJET_ENV: z.enum(["development", "staging", "production"]),
+  UPSTASH_REDIS_REST_URL: z.string(),
+  UPSTASH_REDIS_REST_TOKEN: z.string(),
 });
 
 export type ServerConfig = z.infer<typeof serverSchema>;

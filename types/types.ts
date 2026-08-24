@@ -3,10 +3,14 @@ export interface NavItemsTypes {
   link: string;
 }
 
+export interface UserDropdownItems {
+  groupName: string;
+  items: NavItemsTypes[];
+}
 
 export interface FooterItemsType {
   heading: string;
-  links: NavItemsTypes[]
+  links: NavItemsTypes[];
 }
 
 export interface WebhookEvent {

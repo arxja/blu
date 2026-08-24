@@ -1,4 +1,4 @@
-import { FooterItemsType, NavItemsTypes } from "@/types/types";
+import { FooterItemsType, NavItemsTypes, UserDropdownItems } from "@/types/types";
 
 export const NAVBAR_ITEMS: NavItemsTypes[] = [
   {
@@ -13,6 +13,35 @@ export const NAVBAR_ITEMS: NavItemsTypes[] = [
     name: "Contact",
     link: "/#",
   },
+];
+
+export const USER_DROPDOWN_ITEMS: UserDropdownItems[] = [
+  {
+    groupName: "Account",
+    items: [
+      {
+        name: "dashboard",
+        link: "/dashboard"
+      },
+      {
+        name: "settings",
+        link: "/settings",
+      },
+      {
+        name: "invitations",
+        link: "/invitations",
+      }
+    ]
+  },
+  {
+    groupName: "Workspace",
+    items: [
+      {
+        name: "new",
+        link: "/"
+      }
+    ]
+  }
 ];
 
 export const FOOTER_ITEMS: FooterItemsType[] = [
