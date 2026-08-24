@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import TenantCardsSkeleton from "@/components/skeletons/TenantCardsSkeleton";
 import TenantCards from "./TenantCards";
 
 type workspace = {
@@ -38,14 +40,20 @@ const Workspaces = ({ activeWorkspaces, workspaces }: WorkspacesProps) => {
           {activeWorkspaces} Active
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-4 p-2 sm:grid-cols-2 xl:grid-cols-3">
-        {workspaces.map((workspace) => (
-          <TenantCards
-            tenant={workspace}
-            key={workspace.id || workspace.slug || workspace.name}
-          />
-        ))}
-      </div>
+      <Suspense
+        fallback={
+          <TenantCardsSkeleton count={Math.min(activeWorkspaces || 3, 3)} />
+        }
+      >
+        <div className="grid grid-cols-1 gap-4 p-2 sm:grid-cols-2 xl:grid-cols-3">
+          {workspaces.map((workspace) => (
+            <TenantCards
+              tenant={workspace}
+              key={workspace.id || workspace.slug || workspace.name}
+            />
+          ))}
+        </div>
+      </Suspense>
     </section>
   );
 };
