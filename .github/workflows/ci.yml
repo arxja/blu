@@ -94,7 +94,7 @@ jobs:
           ARCJET_ENV: "development"
           ARCJET_KEY: ajkey_dummy
           UPSTASH_REDIS_REST_URL: "upstash_dummy"
-          UPSTASH_REDIS_REST_TOKEN: "upstash_dummy_token"
+          UPSTASH_REDIS_REST_TOKEN: "https://upstash_dummy.io"
           # Client-side
           NEXT_PUBLIC_APP_NAME: "My App"
           NEXT_PUBLIC_API_URL: "/api"
