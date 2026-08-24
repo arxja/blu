@@ -15,17 +15,22 @@ export const CACHE_TTL = {
 };
 
 // ---------- Tenant cache ----------
+export type CachedTenantPayload = {
+  id: string;
+  name: string;
+  subdomain: string;
+  plan: string;
+};
+
 export async function getCachedTenant(subdomain: string) {
   const key = `tenant:subdomain:${subdomain}`;
-  return await redis.get<{
-    id: string;
-    name: string;
-    subdomain: string;
-    plan: string;
-  }>(key);
+  return await redis.get<CachedTenantPayload>(key);
 }
 
-export async function setCachedTenant(subdomain: string, data: any) {
+export async function setCachedTenant(
+  subdomain: string,
+  data: CachedTenantPayload,
+) {
   const key = `tenant:subdomain:${subdomain}`;
   await redis.set(key, data, { ex: CACHE_TTL.TENANT });
 }
@@ -35,21 +40,26 @@ export async function invalidateTenantCache(subdomain: string) {
 }
 
 // ---------- User workspaces cache ----------
+export type CachedUserWorkspace = {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+  members: number;
+  logo: string;
+};
+
+export type CachedUserWorkspaces = CachedUserWorkspace[];
+
 export async function getCachedUserWorkspaces(userId: string) {
   const key = `user:workspaces:${userId}`;
-  return await redis.get<
-    Array<{
-      id: string;
-      name: string;
-      slug: string;
-      role: string;
-      members: number;
-      logo: string;
-    }>
-  >(key);
+  return await redis.get<CachedUserWorkspaces>(key);
 }
 
-export async function setCachedUserWorkspaces(userId: string, data: any) {
+export async function setCachedUserWorkspaces(
+  userId: string,
+  data: CachedUserWorkspaces,
+) {
   const key = `user:workspaces:${userId}`;
   await redis.set(key, data, { ex: CACHE_TTL.USER_WORKSPACES });
 }
