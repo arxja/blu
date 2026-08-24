@@ -38,7 +38,14 @@ export async function invalidateTenantCache(subdomain: string) {
 export async function getCachedUserWorkspaces(userId: string) {
   const key = `user:workspaces:${userId}`;
   return await redis.get<
-    Array<{ id: string; name: string; slug: string; role: string }>
+    Array<{
+      id: string;
+      name: string;
+      slug: string;
+      role: string;
+      members: number;
+      logo: string;
+    }>
   >(key);
 }
 
