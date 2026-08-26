@@ -16,10 +16,6 @@ export async function GET(request: Request, { params }: RouteContext) {
   try {
     const user = await getCurrentUser();
 
-    if (!user) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
-    }
-
     const { tenantId } = await params;
 
     const { tenant } = await authorizeTenantAccess(user.id, tenantId);
@@ -30,13 +26,7 @@ export async function GET(request: Request, { params }: RouteContext) {
   } catch (error) {
     if (error instanceof AppError) {
       if (error.errorCode === "UNAUTHORIZED") {
-        return NextResponse.json(
-          {
-            error: error.message,
-            code: error.errorCode,
-          },
-          { status: error.statusCode },
-        );
+        return NextResponse.redirect(new URL("/sign-in", request.url));
       }
 
       return NextResponse.json(
@@ -50,7 +40,7 @@ export async function GET(request: Request, { params }: RouteContext) {
 
     logger.error(
       error instanceof Error ? error : undefined,
-      "Failed to launch workspace"
+      "Failed to launch workspace",
     );
 
     return NextResponse.json(
