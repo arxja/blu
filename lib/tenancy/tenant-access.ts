@@ -22,7 +22,7 @@ export async function authorizeTenantAccess(userId: string, tenantId: string) {
     throw AppError.notFound("Workspace not found.");
   }
 
-  if (tenant.status === "suspended") {
+  if (tenant.status !== "active") {
     throw AppError.forbidden("This workspace has been suspended.");
   }
 

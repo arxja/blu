@@ -31,7 +31,7 @@ export async function getTenantContext(
     return null;
   }
 
-  if (tenant.status === "suspended") {
+  if (tenant.status !== "active") {
     throw AppError.forbidden("This workspace has been suspended.");
   }
 
