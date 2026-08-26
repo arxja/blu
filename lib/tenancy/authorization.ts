@@ -12,7 +12,14 @@ export function requireMinimumRole(
   currentRole: TenantRole,
   minimumRole: TenantRole,
 ): void {
-  if (ROLE_RANK[currentRole] < ROLE_RANK[minimumRole]) {
+  const currentRank = ROLE_RANK[currentRole];
+  const minimumRank = ROLE_RANK[minimumRole];
+  if (currentRank === undefined || minimumRank === undefined) {
+    throw AppError.forbidden(
+      "You do not have permission to perform this action.",
+    );
+  }
+  if (currentRank < minimumRank) {
     throw AppError.forbidden(
       "You do not have permission to perform this action.",
     );
