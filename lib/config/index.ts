@@ -18,6 +18,7 @@ const serverSchema = z.object({
   SMTP_PASS: z.string().optional(),
   NODE_ENV: z.enum(["development", "staging", "production", "test", "ci"]),
   APP_URL: z.string().url(),
+  APP_BASE_DOMAIN: z.string().min(1),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]),
   SENTRY_DSN: z.string().url().optional(),
   STRIPE_PRO_MONTHLY_PRICE_ID: z.string().optional(),
@@ -27,6 +28,11 @@ const serverSchema = z.object({
   ARCJET_ENV: z.enum(["development", "staging", "production"]),
   UPSTASH_REDIS_REST_URL: z.string(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),
+  AUTH_COOKIE_DOMAIN: z.string().optional(),
+  AUTH_COOKIE_SECURE: z
+    .string()
+    .default("false")
+    .transform((v) => v === "true"),
 });
 
 export type ServerConfig = z.infer<typeof serverSchema>;
