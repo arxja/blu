@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyJWT } from "@/lib/auth/jwt";
 
-const publicRoutes = [
+import { verifyJWT } from "@/lib/auth/jwt";
+import { AppError } from "@/lib/errors";
+import { resolveHost } from "@/lib/tenancy/hostname";
+import { requireTenantContext } from "@/lib/tenancy/tenant-context";
+import { serverConfig } from "@/lib/config";
+
+const PUBLIC_ROUTES = [
   "/sign-in",
   "/sign-up",
   "/api/auth/sign-in",
@@ -11,67 +16,150 @@ const publicRoutes = [
   "/pricing",
 ];
 
-const protectedRoutes = ["/dashboard", "/workspaces", "/api/protected"];
+function isPublicRoute(pathname: string): boolean {
+  return PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
 
-function getSubdomain(request: NextRequest): string | null {
-  const host = request.headers.get("host") || "";
-  const parts = host.split(".");
-  if (parts.length >= 2 && parts[0] !== "www" && parts[0] !== "localhost") {
-    return parts[0];
-  }
-  return null;
+function getControlPlaneUrl(pathname = "/"): URL {
+  const url = new URL(serverConfig.APP_URL);
+
+  url.pathname = pathname.startsWith("/") ? pathname : `/${pathname}`;
+
+  url.search = "";
+  url.hash = "";
+
+  return url;
 }
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const subdomain = getSubdomain(request);
 
-  const token = request.cookies.get("auth_token")?.value;
-  let payload = null;
-  if (token) {
-    payload = verifyJWT(token);
-  }
+  const hostContext = resolveHost(request.headers.get("host"));
 
-  if (payload && ["/sign-in", "/sign-up"].includes(pathname)) {
-    const dashboardUrl = new URL("/dashboard", request.url);
-    return NextResponse.redirect(dashboardUrl);
-  }
+  /*
+   * ----------------------------------------------------------
+   * ROOT / CONTROL PLANE
+   * ----------------------------------------------------------
+   */
 
-  // Only bypass the proxy for the absolute root when there is no subdomain.
-  if (pathname === "/" && !subdomain) {
-    return NextResponse.next();
-  }
+  if (hostContext.type === "root") {
+    const token = request.cookies.get("auth_token")?.value;
 
-  if (
-    publicRoutes.some(
-      (route) => pathname === route || pathname.startsWith(`${route}/`),
-    )
-  ) {
-    return NextResponse.next();
-  }
+    const payload = token ? verifyJWT(token) : null;
 
-  if (!payload) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    /*
+     * Prevent direct access to the internal tenant route
+     * from the root host.
+     */
+    if (pathname === "/s") {
+      return NextResponse.rewrite(new URL("/404", request.url));
     }
-    const loginUrl = new URL("/sign-in", request.url);
-    return NextResponse.redirect(loginUrl);
+
+    if (pathname.startsWith("/s/")) {
+      const [tenantSubdomain] = pathname.slice("/s/".length).split("/");
+
+      try {
+        await requireTenantContext(tenantSubdomain);
+      } catch (error) {
+        if (error instanceof AppError && error.statusCode === 403) {
+          if (pathname.startsWith("/api/")) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+          }
+          return NextResponse.redirect(getControlPlaneUrl("/sign-in"));
+        }
+
+        throw error;
+      }
+
+      return NextResponse.next();
+    }
+
+    /*
+     * Auth pages.
+     */
+    if (isPublicRoute(pathname)) {
+      return NextResponse.next();
+    }
+
+    /*
+     * Control-plane authentication.
+     */
+    if (!payload) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      return NextResponse.redirect(getControlPlaneUrl("/sign-in"));
+    }
+
+    return NextResponse.next();
   }
 
-  if (subdomain) {
-    // Preserve x-subdomain header for downstream consumption.
-    // Rewrite subdomain root and paths to an established route (dashboard)
-    // so the rewrite target resolves to an existing route in the app.
-    const newPath = `/dashboard${pathname === "/" ? "" : pathname}`;
-    const rewriteUrl = new URL(newPath, request.url);
-    const rewriteResponse = NextResponse.rewrite(rewriteUrl);
-    rewriteResponse.headers.set("x-subdomain", subdomain);
-    return rewriteResponse;
+  /*
+   * ----------------------------------------------------------
+   * TENANT HOST
+   * ----------------------------------------------------------
+   *
+   * Example:
+   *
+   * demo.blu.test
+   */
+
+  if (hostContext.type === "tenant") {
+    /*
+     * API routes stay completely normal.
+     *
+     * demo.blu.test/api/auth/me
+     *          ↓
+     * /api/auth/me
+     */
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.next();
+    }
+
+    /*
+     * Authenticated tenant application.
+     *
+     * The tenant page performs authoritative authorization.
+     */
+    const token = request.cookies.get("auth_token")?.value;
+
+    const payload = token ? verifyJWT(token) : null;
+
+    if (!payload) {
+      return NextResponse.redirect(getControlPlaneUrl("/sign-in"));
+    }
+
+    /*
+     * Don't recursively rewrite an already rewritten request.
+     */
+    if (pathname === "/s" || pathname.startsWith("/s/")) {
+      return NextResponse.next();
+    }
+
+    /*
+     * demo.blu.test/
+     *     ↓
+     * /s/demo
+     *
+     * demo.blu.test/analytics
+     *     ↓
+     * /s/demo/analytics
+     */
+    const rewrittenPath = `/s/${hostContext.subdomain}${
+      pathname === "/" ? "" : pathname
+    }`;
+
+    const rewriteUrl = new URL(rewrittenPath, request.url);
+
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: ["/((?!/api(?:/|$)|/_next(?:/|$)|[\\w-]+\\.\\w+(?:/|$)).*)"],
 };

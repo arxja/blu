@@ -19,11 +19,15 @@ export type ClientConfig = z.infer<typeof clientSchema>;
 
 export function getClientConfig(): ClientConfig {
   try {
-    return clientSchema.parse(
+    // In Node tests `window` may be present (jsdom) but
+    // `window.__NEXT_DATA__?.props?.pageProps` can be undefined.
+    // Fall back to `process.env` when __NEXT_DATA__ is not available.
+    const source =
       typeof window === "undefined"
         ? process.env
-        : window.__NEXT_DATA__?.props?.pageProps,
-    );
+        : (window.__NEXT_DATA__?.props?.pageProps ?? process.env);
+
+    return clientSchema.parse(source);
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error("❌ Client environment validation failed:", error.issues);

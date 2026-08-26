@@ -7,6 +7,7 @@ import membershipModel from "@/lib/database/models/membership.model";
 import { signJWT } from "@/lib/auth/jwt";
 import { connectDB } from "@/lib/database/mongoose";
 import { Types } from "mongoose";
+import { serverConfig } from "@/lib/config";
 
 interface PopulatedMembership {
   _id: Types.ObjectId;
@@ -95,8 +96,9 @@ export async function POST(req: NextRequest) {
 
     response.cookies.set("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: serverConfig.AUTH_COOKIE_SECURE,
       sameSite: "lax",
+      domain: serverConfig.AUTH_COOKIE_DOMAIN || undefined,
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });

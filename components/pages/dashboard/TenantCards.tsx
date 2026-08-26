@@ -9,10 +9,10 @@ import {
 } from "@/components/ui/card";
 import { ArrowRight, Users } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 interface TenantCardsProps {
   tenant: {
+    id: string;
     logo?: string;
     name: string;
     slug: string;
@@ -28,6 +28,7 @@ const TenantCards = ({ tenant }: TenantCardsProps) => {
 
   const chooseBadgeColor = (role: string) => {
     const normalizedRole = role.toLowerCase();
+
     switch (normalizedRole) {
       case "owner":
         return "bg-emerald-500 text-white";
@@ -60,6 +61,7 @@ const TenantCards = ({ tenant }: TenantCardsProps) => {
             </div>
           )}
         </div>
+
         <Badge variant="outline" className={chooseBadgeColor(tenant.role)}>
           {formattedRole}
         </Badge>
@@ -69,6 +71,7 @@ const TenantCards = ({ tenant }: TenantCardsProps) => {
         <CardTitle className="text-xl font-semibold text-slate-900">
           {tenant.name}
         </CardTitle>
+
         <CardDescription className="mt-2 text-sm text-slate-500">
           {`${tenant.slug}.blu.so`}
         </CardDescription>
@@ -80,13 +83,13 @@ const TenantCards = ({ tenant }: TenantCardsProps) => {
           <span>{tenant.members} Members</span>
         </div>
 
-        <Link
-          href={`https://${tenant.slug}.blu.so`}
+        <a
+          href={`/api/workspaces/${tenant.id}/launch`}
           className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700"
         >
           <span>Launch Workspace</span>
           <ArrowRight size={16} />
-        </Link>
+        </a>
       </CardFooter>
     </Card>
   );

@@ -11,39 +11,47 @@ export interface JWTPayload {
 }
 
 export function signJWT(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
 }
 
 export function verifyJWT(token: string): JWTPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as JWTPayload;
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      // refresh token logic here
-      return null;
-    }
+  } catch {
     return null;
   }
 }
 
-// For Server Components and Server Actions
 export async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();
-  return cookieStore.get("auth_token")?.value || null;
+
+  return cookieStore.get("auth_token")?.value ?? null;
 }
 
 export async function setAuthToken(token: string): Promise<void> {
   const cookieStore = await cookies();
+
   cookieStore.set("auth_token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: serverConfig.AUTH_COOKIE_SECURE,
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    domain: serverConfig.AUTH_COOKIE_DOMAIN || undefined,
+    maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
 }
 
 export async function removeAuthToken(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.delete("auth_token");
+
+  cookieStore.set("auth_token", "", {
+    httpOnly: true,
+    secure: serverConfig.AUTH_COOKIE_SECURE,
+    sameSite: "lax",
+    domain: serverConfig.AUTH_COOKIE_DOMAIN || undefined,
+    maxAge: 0,
+    path: "/",
+  });
 }

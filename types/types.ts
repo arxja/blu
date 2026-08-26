@@ -1,3 +1,5 @@
+// todo: move these types to a separate file and import them in the files that need them
+
 export interface NavItemsTypes {
   name: string;
   link: string;
