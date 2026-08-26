@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { verifyJWT } from "@/lib/auth/jwt";
+import { AppError } from "@/lib/errors";
 import { resolveHost } from "@/lib/tenancy/hostname";
+import { requireTenantContext } from "@/lib/tenancy/tenant-context";
 import { serverConfig } from "@/lib/config";
 
 const PUBLIC_ROUTES = [
@@ -31,7 +33,7 @@ function getControlPlaneUrl(pathname = "/"): URL {
   return url;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const hostContext = resolveHost(request.headers.get("host"));
@@ -51,8 +53,27 @@ export function proxy(request: NextRequest) {
      * Prevent direct access to the internal tenant route
      * from the root host.
      */
-    if (pathname === "/s" || pathname.startsWith("/s/")) {
+    if (pathname === "/s") {
       return NextResponse.rewrite(new URL("/404", request.url));
+    }
+
+    if (pathname.startsWith("/s/")) {
+      const [tenantSubdomain] = pathname.slice("/s/".length).split("/");
+
+      try {
+        await requireTenantContext(tenantSubdomain);
+      } catch (error) {
+        if (error instanceof AppError && error.statusCode === 403) {
+          if (pathname.startsWith("/api/")) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+          }
+          return NextResponse.redirect(getControlPlaneUrl("/sign-in"));
+        }
+
+        throw error;
+      }
+
+      return NextResponse.next();
     }
 
     /*
@@ -140,5 +161,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|[\\w-]+\\.\\w+).*)"],
+  matcher: ["/((?!/api(?:/|$)|/_next(?:/|$)|[\\w-]+\\.\\w+(?:/|$)).*)"],
 };
