@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { requireTenantContext } from "@/lib/tenancy/tenant-context";
+import { getTenantContext } from "@/lib/tenancy/tenant-context";
 
 interface TenantPageProps {
   params: Promise<{
@@ -11,12 +11,10 @@ interface TenantPageProps {
 export default async function TenantHomePage({ params }: TenantPageProps) {
   const { subdomain } = await params;
 
-  const context = await requireTenantContext(subdomain);
-
+  const context = await getTenantContext(subdomain);
   if (!context) {
     notFound();
   }
-
   const { user, tenant, membership } = context;
 
   return (

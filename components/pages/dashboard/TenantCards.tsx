@@ -12,7 +12,7 @@ import Image from "next/image";
 
 interface TenantCardsProps {
   tenant: {
-    id?: string;
+    id: string;
     logo?: string;
     name: string;
     slug: string;
@@ -42,10 +42,6 @@ const TenantCards = ({ tenant }: TenantCardsProps) => {
         return "bg-slate-500 text-white";
     }
   };
-
-  if (!tenant.id) {
-    return null;
-  }
 
   return (
     <Card className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow duration-200 hover:shadow-md">
