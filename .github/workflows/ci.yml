@@ -18,11 +18,11 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           persist-credentials: false
-      
+
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2
         with:
           version: 11
-      
+
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
           node-version: ${{ matrix.node-version }}
@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Run tests
         run: pnpm run test:ci
         env:
@@ -41,6 +41,9 @@ jobs:
           JWT_SECRET: "dummy-jwt-secret-that-is-at-least-32-characters-long!!"
           STRIPE_SECRET_KEY: "sk_test_dummy_key_for_ci_test"
           APP_URL: "https://example.com"
+          APP_BASE_DOMAIN: "example.com"
+          AUTH_COOKIE_DOMAIN: "example.com"
+          AUTH_COOKIE_SECURE: "false"
           LOG_LEVEL: "error"
           STRIPE_WEBHOOK_SECRET: "whsec_dummy_webhook_secret"
           ARCJET_ENV: "development"
@@ -53,7 +56,7 @@ jobs:
           NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
           NEXT_PUBLIC_STRIPE_CHECKOUT_URL: "https://checkout.stripe.com"
           NEXT_PUBLIC_DEMO_MODE: "false"
-      
+
   build:
     runs-on: ubuntu-latest
     needs: test
@@ -66,11 +69,11 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           persist-credentials: false
-      
+
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2
         with:
           version: 11
-      
+
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
         with:
           node-version: ${{ matrix.node-version }}
@@ -78,7 +81,7 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Build
         run: pnpm run build
         env:
@@ -89,6 +92,9 @@ jobs:
           JWT_SECRET: "dummy-jwt-secret-that-is-at-least-32-characters-long!!"
           STRIPE_SECRET_KEY: "sk_test_dummy_key_for_ci_build"
           APP_URL: "https://example.com"
+          APP_BASE_DOMAIN: "example.com"
+          AUTH_COOKIE_DOMAIN: "example.com"
+          AUTH_COOKIE_SECURE: "false"
           LOG_LEVEL: "error"
           STRIPE_WEBHOOK_SECRET: "whsec_dummy_webhook_secret"
           ARCJET_ENV: "development"

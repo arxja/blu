@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
   },
 
+  allowedDevOrigins: ["demo.blu.test", "app.blu.test"],
+
   serverExternalPackages: ["pino", "pino-pretty"],
 };
 
