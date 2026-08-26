@@ -1,7 +1,7 @@
 import TenantCards from "./TenantCards";
 
 type workspace = {
-  id?: string;
+  id: string;
   logo?: string;
   name: string;
   slug: string;
