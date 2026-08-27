@@ -12,6 +12,7 @@ import Dashboard from "@/lib/database/models/dashboard.model";
 import Report from "@/lib/database/models/report.model";
 import Invitation from "@/lib/database/models/invitation.model";
 import { connectDB } from "@/lib/database/mongoose";
+import { getTenantUrl } from "@/lib/tenancy/hostname";
 
 // ========== Helper: generate API keys ==========
 function generateApiKey() {
@@ -343,8 +344,8 @@ async function seed() {
     "   Solo:    solo@example.com    (role: owner, single-user workspace)",
   );
   console.log("\n🌐 Workspace URLs:");
-  console.log("   http://demo.localhost:3000");
-  console.log("   http://membership-test.localhost:3000");
+  console.log(`   ${getTenantUrl(tenant.subdomain)}`);
+  console.log(`   ${getTenantUrl(soloTenant.subdomain)}`);
   console.log(
     "\n💡 Tip: Use the subdomain to test multi‑workspace isolation and membership logic.",
   );
