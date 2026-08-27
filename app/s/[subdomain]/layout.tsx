@@ -1,4 +1,5 @@
-import { requireTenantContext } from "@/lib/tenancy/tenant-context";
+import { getTenantContext } from "@/lib/tenancy/tenant-context";
+import { notFound } from "next/navigation";
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -13,7 +14,11 @@ export default async function TenantLayout({
 }: TenantLayoutProps) {
   const { subdomain } = await params;
 
-  await requireTenantContext(subdomain);
+  const ctx = await getTenantContext(subdomain);
+
+  if (!ctx) {
+    notFound();
+  }
 
   return children;
 }
