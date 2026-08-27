@@ -1,4 +1,5 @@
-import { requireTenantContext } from "@/lib/tenancy/tenant-context";
+import { getTenantContext } from "@/lib/tenancy/tenant-context";
+import { notFound } from "next/navigation";
 
 interface TenantHomePageProps {
   params: Promise<{
@@ -9,7 +10,13 @@ interface TenantHomePageProps {
 export default async function TenantHomePage({ params }: TenantHomePageProps) {
   const { subdomain } = await params;
 
-  const { user, tenant, membership } = await requireTenantContext(subdomain);
+  const ctx = await getTenantContext(subdomain);
+
+  if (!ctx) {
+    notFound();
+  }
+
+  const { user, tenant, membership } = ctx;
 
   return (
     <main className="p-8">
