@@ -114,7 +114,7 @@ async function seed() {
   // 2. Create global users (no tenantId, no role)
   const passwordHash = await bcrypt.hash("Test12341234", 10);
 
-  const [ownerUser, adminUser, analystUser, viewerUser] =
+  const [ownerUser, adminUser, analystUser, viewerUser, soloUser] =
     await DashboardUser.create([
       {
         email: "owner@example.com",
@@ -140,10 +140,16 @@ async function seed() {
         passwordHash,
         isActive: true,
       },
+      {
+        email: "solo@example.com",
+        name: "Solo Workspace Owner",
+        passwordHash,
+        isActive: true,
+      },
     ]);
-  console.log("👥 Created 4 global users");
+  console.log("👥 Created 5 global users");
 
-  // 3. Create a tenant (workspace)
+  // 3. Create demo tenant (workspace)
   const tenant = await Tenant.create({
     companyName: "Demo Workspace",
     subdomain: "demo",
@@ -162,6 +168,27 @@ async function seed() {
   });
   console.log(
     `🏢 Created tenant: ${tenant.companyName} (${tenant.subdomain}.localhost:3000)`,
+  );
+
+  // 3b. Create a second workspace with a single user for membership testing
+  const soloTenant = await Tenant.create({
+    companyName: "Membership Test Workspace",
+    subdomain: "membership-test",
+    ownerId: soloUser._id,
+    members: 1,
+    logo: "",
+    plan: "free",
+    status: "active",
+    billingEmail: soloUser.email,
+    quotas: {
+      monthlyEvents: 5000,
+      retentionDays: 30,
+      apiRateLimit: 200,
+      seats: 1,
+    },
+  });
+  console.log(
+    `🏢 Created tenant: ${soloTenant.companyName} (${soloTenant.subdomain}.localhost:3000)`,
   );
 
   // 4. Create memberships (user -> tenant + role)
@@ -190,8 +217,16 @@ async function seed() {
       role: "viewer",
       isActive: true,
     },
+    {
+      userId: soloUser._id,
+      tenantId: soloTenant._id,
+      role: "owner",
+      isActive: true,
+    },
   ]);
-  console.log("🔗 Created 4 memberships (owner, admin, analyst, viewer)");
+  console.log(
+    "🔗 Created 5 memberships (demo workspace + single-user membership test workspace)",
+  );
 
   // 5. API keys for the tenant
   const prodKey = generateApiKey();
@@ -304,9 +339,15 @@ async function seed() {
   console.log("   Admin:   admin@example.com   (role: admin)");
   console.log("   Analyst: analyst@example.com (role: analyst)");
   console.log("   Viewer:  viewer@example.com  (role: viewer)");
-  console.log("\n🌐 Workspace URL:");
-  console.log("   http://demo.localhost:3000 (add to /etc/hosts)");
-  console.log("\n💡 Tip: Use the subdomain to test multi‑workspace isolation.");
+  console.log(
+    "   Solo:    solo@example.com    (role: owner, single-user workspace)",
+  );
+  console.log("\n🌐 Workspace URLs:");
+  console.log("   http://demo.localhost:3000");
+  console.log("   http://membership-test.localhost:3000");
+  console.log(
+    "\n💡 Tip: Use the subdomain to test multi‑workspace isolation and membership logic.",
+  );
 
   process.exit(0);
 }
