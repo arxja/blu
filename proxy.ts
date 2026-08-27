@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { verifyJWT } from "@/lib/auth/jwt";
-import { AppError } from "@/lib/errors";
 import { resolveHost } from "@/lib/tenancy/hostname";
-import { requireTenantContext } from "@/lib/tenancy/tenant-context";
 import { serverConfig } from "@/lib/config";
 
 const PUBLIC_ROUTES = [
@@ -33,64 +31,41 @@ function getControlPlaneUrl(pathname = "/"): URL {
   return url;
 }
 
-export async function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const hostContext = resolveHost(request.headers.get("host"));
 
   /*
    * ----------------------------------------------------------
+   * API REQUESTS
+   * ----------------------------------------------------------
+   *
+   * Keep APIs out of hostname page rewriting.
+   */
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
+  /*
+   * ----------------------------------------------------------
    * ROOT / CONTROL PLANE
    * ----------------------------------------------------------
    */
-
   if (hostContext.type === "root") {
     const token = request.cookies.get("auth_token")?.value;
 
     const payload = token ? verifyJWT(token) : null;
 
-    /*
-     * Prevent direct access to the internal tenant route
-     * from the root host.
-     */
-    if (pathname === "/s") {
-      return NextResponse.rewrite(new URL("/404", request.url));
-    }
-
-    if (pathname.startsWith("/s/")) {
-      const [tenantSubdomain] = pathname.slice("/s/".length).split("/");
-
-      try {
-        await requireTenantContext(tenantSubdomain);
-      } catch (error) {
-        if (error instanceof AppError && error.statusCode === 403) {
-          if (pathname.startsWith("/api/")) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-          }
-          return NextResponse.redirect(getControlPlaneUrl("/sign-in"));
-        }
-
-        throw error;
-      }
-
-      return NextResponse.next();
-    }
-
-    /*
-     * Auth pages.
-     */
     if (isPublicRoute(pathname)) {
+      if (payload && (pathname === "/sign-in" || pathname === "/sign-up")) {
+        return NextResponse.redirect(getControlPlaneUrl("/dashboard"));
+      }
+
       return NextResponse.next();
     }
 
-    /*
-     * Control-plane authentication.
-     */
     if (!payload) {
-      if (pathname.startsWith("/api/")) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
       return NextResponse.redirect(getControlPlaneUrl("/sign-in"));
     }
 
@@ -102,28 +77,10 @@ export async function proxy(request: NextRequest) {
    * TENANT HOST
    * ----------------------------------------------------------
    *
-   * Example:
-   *
-   * demo.blu.test
+   * The hostname identifies the tenant.
+   * The dynamic route carries that identity into App Router.
    */
-
   if (hostContext.type === "tenant") {
-    /*
-     * API routes stay completely normal.
-     *
-     * demo.blu.test/api/auth/me
-     *          ↓
-     * /api/auth/me
-     */
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.next();
-    }
-
-    /*
-     * Authenticated tenant application.
-     *
-     * The tenant page performs authoritative authorization.
-     */
     const token = request.cookies.get("auth_token")?.value;
 
     const payload = token ? verifyJWT(token) : null;
@@ -133,33 +90,22 @@ export async function proxy(request: NextRequest) {
     }
 
     /*
-     * Don't recursively rewrite an already rewritten request.
+     * Prevent recursive rewriting.
      */
     if (pathname === "/s" || pathname.startsWith("/s/")) {
       return NextResponse.next();
     }
 
-    /*
-     * demo.blu.test/
-     *     ↓
-     * /s/demo
-     *
-     * demo.blu.test/analytics
-     *     ↓
-     * /s/demo/analytics
-     */
     const rewrittenPath = `/s/${hostContext.subdomain}${
       pathname === "/" ? "" : pathname
     }`;
 
-    const rewriteUrl = new URL(rewrittenPath, request.url);
-
-    return NextResponse.rewrite(rewriteUrl);
+    return NextResponse.rewrite(new URL(rewrittenPath, request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!/api(?:/|$)|/_next(?:/|$)|[\\w-]+\\.\\w+(?:/|$)).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
 };

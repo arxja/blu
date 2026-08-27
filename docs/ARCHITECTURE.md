@@ -292,3 +292,77 @@ graph LR
     style T1 fill:#2F2FE4
     style T2 fill:#2F2FE4
 ```
+
+## Tenancy Flow (technical)
+
+```mermaid
+flowchart TD
+    subgraph Entry_Points [Entry Points]
+        Root["Root / Control Plane<br>(app.bu.test)"]
+        TenantDemo["Tenant Host<br>(demo.bu.test)"]
+        TenantAcme["Tenant Host<br>(acme.bu.test)"]
+    end
+
+    subgraph Middleware [Middleware]
+        Proxy["Next.js Proxy (proxy.ts)<br>Request Interception & Routing"]
+    end
+
+    subgraph Application [Next.js Application]
+        direction TB
+        subgraph ControlPlaneFlow [Control Plane Flow]
+            CPRoutes["Control Plane Routes<br>/ (Home), /pricing, /sign-in,<br>/sign-up, /api/workspaces/*"]
+        end
+
+        subgraph TenantFlow [Tenant Flow]
+            TRoutes["Tenant Routes (Internal)<br>/tenant/*<br>TenantHomePage"]
+        end
+
+        subgraph APIShared [API Routes]
+            APIRoutes["API Routes (Shared)<br>/api/isr/me, /api/auth/...,<br>/api/projects/..., /api/webhooks/..."]
+        end
+    end
+
+    subgraph Infrastructure [Infrastructure & Services]
+        DB[("Database (MongoDB)<br>Users, Tenants, Memberships, Workspaces")]
+        Redis[("Redis<br>Caching, Rate Limiting, Sessions")]
+        ServiceLayer["Services<br>Tenant Access, Quota Service, Billing, Feature Flags"]
+        Integrations["Integrations<br>Stripe, Email, Webhooks, Queue System"]
+    end
+
+    subgraph Security_Box [Security]
+        Auth["Shared Authentication<br>JWT stored in cookie (Domain=bu.test)"]
+        TenantAuth["Tenant Authorization<br>Role-based access control<br>Isolated tenant data"]
+        HostRes["Hostname Resolution<br>demo.bu.test -> tenant: demo"]
+    end
+
+    %% Control Plane Flow
+    Root -->|"1. User requests /dashboard"| Proxy
+    Proxy -->|"2. Proxy validates auth"| CPRoutes
+    CPRoutes -->|"3. Request proceeds normally"| CPRoutes
+    CPRoutes -->|"4. Next.js handles the request"| DB
+    CPRoutes --> Redis
+    CPRoutes --> ServiceLayer
+    CPRoutes --> Integrations
+
+    %% Tenant Flow
+    TenantDemo -->|"1. User requests /"| Proxy
+    TenantAcme -->|"1. User requests /"| Proxy
+    Proxy -->|"2. Proxy validates auth"| TRoutes
+    TRoutes -->|"3. Rewrite to /tenant"| TRoutes
+    TRoutes -->|"4. Next.js handles internally"| DB
+    TRoutes --> Redis
+    TRoutes --> ServiceLayer
+    TRoutes --> Integrations
+
+    %% API Routes
+    Proxy -->|"Allow API routes to pass through"| APIRoutes
+    APIRoutes --> DB
+    APIRoutes --> Redis
+    APIRoutes --> ServiceLayer
+    APIRoutes --> Integrations
+
+    %% Security Connections
+    Auth -.-> Proxy
+    TenantAuth -.-> TRoutes
+    HostRes -.-> Proxy
+```

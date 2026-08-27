@@ -98,3 +98,19 @@ describe.each([
     });
   }
 });
+
+describe("correct internal route", () => {
+  it("identifies app.blu.test as the root application", () => {
+    expect(resolveHost("app.blu.test:3000")).toEqual({
+      type: "root",
+      hostname: "app.blu.test",
+    });
+  });
+
+  it("does not accept nested subdomains", () => {
+    expect(resolveHost("foo.demo.blu.test:3000")).toEqual({
+      type: "root",
+      hostname: "foo.demo.blu.test",
+    });
+  });
+});
