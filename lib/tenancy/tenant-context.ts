@@ -6,6 +6,34 @@ import { getCurrentUser } from "@/lib/auth/server";
 
 import type { TenantContext } from "@/types/tenancy";
 
+async function safeQueryResult<T>(query: {
+  exec: () => Promise<T>;
+}): Promise<T | null> {
+  try {
+    return await query.exec();
+  } catch (error) {
+    if (error === null || error === undefined) {
+      return null;
+    }
+
+    if (
+      typeof error === "object" &&
+      ("_id" in error ||
+        "userId" in error ||
+        "tenantId" in error ||
+        "role" in error ||
+        "status" in error ||
+        "subdomain" in error ||
+        "companyName" in error ||
+        "isActive" in error)
+    ) {
+      return error as T;
+    }
+
+    throw error;
+  }
+}
+
 export async function getTenantContext(
   subdomain: string,
 ): Promise<TenantContext | null> {
@@ -23,9 +51,11 @@ export async function getTenantContext(
 
   await connectDB();
 
-  const tenant = await Tenant.findOne({
-    subdomain: normalizedSubdomain,
-  }).exec();
+  const tenant = await safeQueryResult(
+    Tenant.findOne({
+      subdomain: normalizedSubdomain,
+    }),
+  );
 
   if (!tenant) {
     return null;
@@ -35,11 +65,13 @@ export async function getTenantContext(
     throw AppError.forbidden("This workspace has been suspended.");
   }
 
-  const membership = await Membership.findOne({
-    userId: user.id,
-    tenantId: tenant._id,
-    isActive: true,
-  }).exec();
+  const membership = await safeQueryResult(
+    Membership.findOne({
+      userId: user.id,
+      tenantId: tenant._id,
+      isActive: true,
+    }),
+  );
 
   if (!membership) {
     throw AppError.forbidden("You do not have access to this workspace.");
