@@ -1,5 +1,5 @@
 import mongoose, { Schema, models, model } from "mongoose";
-import type { AuditAction } from "@/lib/audit/actions";
+import { AuditActions, type AuditAction } from "@/lib/audit/actions";
 import { AuditResourceType } from "@/types/audit";
 
 export interface IAuditLog extends mongoose.Document {
@@ -37,6 +37,7 @@ const AuditLogSchema = new Schema<IAuditLog>(
     action: {
       type: String,
       required: true,
+      enum: Object.values(AuditActions),
       immutable: true,
     },
 
