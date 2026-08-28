@@ -33,4 +33,16 @@ describe("AuditLog model", () => {
 
     expect(error).toBeUndefined();
   });
+
+  it("rejects an unknown audit action", () => {
+    const doc = new AuditLog({
+      tenantId: "507f1f77bcf86cd799439011",
+      action: "unknown.event",
+      resourceType: "workspace",
+    });
+
+    const error = doc.validateSync();
+
+    expect(error?.errors.action).toBeDefined();
+  });
 });
