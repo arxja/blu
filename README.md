@@ -69,7 +69,7 @@ flowchart TB
 
 ## ⚙️ Key features by the live demo
 
-- [ ] Multi-tenant architecture (enterprise pattern)
+- [x] Multi-tenant architecture (enterprise pattern)
 - [ ] Real-time analytics dashboard
 - [x] Stripe webhook handling
 - [ ] Performance optimized (SSR/ISR)
@@ -176,6 +176,7 @@ MIT © Blu Analytics
 ## 🔗 Links
 
 - **Live Demo (coming soon):** will be online very soon
+- **SDKs (coming soon):** will be implemented very soon [blu_sdk](https://github.com/arxja/blu_sdk)
 - **Documentation:** [docs.blu.dev](https://docs.blu.dev) (in progress)
 <!-- - **Community:** [Discord](https://discord.gg/blu) (join to follow progress) -->
 
