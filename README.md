@@ -77,6 +77,8 @@ flowchart TB
 - [ ] Security best practices
 - [ ] Rate limiting & bot protection
 - [ ] A/B testing framework
+- [ ] Define content for MCP and Skills
+- [ ] Implement a MCP server and publish Skills doc
 
 ---
 
