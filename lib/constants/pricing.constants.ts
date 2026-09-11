@@ -1,3 +1,5 @@
+import { clientConfig } from "../config/config-client";
+
 export const PLANS = [
   {
     id: "free",
@@ -10,7 +12,6 @@ export const PLANS = [
       dataRetentionDays: 30,
       apiRateLimit: 100,
       seats: 1,
-      dashboards: 3,
       reports: 5,
     },
     features: [
@@ -18,7 +19,6 @@ export const PLANS = [
       "100,000 events / month",
       "30-day data retention",
       "Core analytics: funnels, retention",
-      "3 dashboards",
       "5 reports",
       "Community support",
     ],
@@ -29,14 +29,13 @@ export const PLANS = [
     id: "pro",
     name: "Pro",
     price: { monthly: 49 },
-    stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+    stripePriceId: clientConfig.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID,
     limits: {
       monthlyTrackedUsers: 10000,
       monthlyEvents: 1000000,
       dataRetentionDays: 180,
       apiRateLimit: 1000,
       seats: 10,
-      dashboards: -1,
       reports: -1,
     },
     features: [
@@ -44,7 +43,6 @@ export const PLANS = [
       "1,000,000 events / month",
       "6-month data retention",
       "Everything in Free, plus:",
-      "Unlimited dashboards",
       "Advanced analytics: user flows, cohorts",
       "Email support within 24h",
       "API access",
@@ -57,14 +55,13 @@ export const PLANS = [
     id: "enterprise",
     name: "Enterprise",
     price: { monthly: 499 },
-    stripePriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
+    stripePriceId: clientConfig.NEXT_PUBLIC_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
     limits: {
       monthlyTrackedUsers: 100000,
       monthlyEvents: 10000000,
       dataRetentionDays: 730,
       apiRateLimit: 10000,
       seats: -1,
-      dashboards: -1,
       reports: -1,
     },
     features: [
