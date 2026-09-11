@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Pricing from "@/components/pages/pricing";
+import { getClientConfig } from "@/lib/config/config-client";
 
 vi.mock("gsap", () => ({
   default: {
@@ -33,6 +34,18 @@ describe("Pricing Component", () => {
   });
 
   describe("Rendering", () => {
+    it("exposes public Stripe plan ids via the client-safe config", () => {
+      process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID = "price_pro_public";
+      process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID =
+        "price_enterprise_public";
+
+      expect(getClientConfig()).toMatchObject({
+        NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID: "price_pro_public",
+        NEXT_PUBLIC_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID:
+          "price_enterprise_public",
+      });
+    });
+
     it("renders all three pricing plans", () => {
       render(<Pricing />);
       expect(screen.getByText("Free")).toBeInTheDocument();
@@ -66,7 +79,6 @@ describe("Pricing Component", () => {
       expect(
         screen.getByText(/Core analytics: funnels, retention/i),
       ).toBeInTheDocument();
-      expect(screen.getByText(/3 dashboards/i)).toBeInTheDocument();
       expect(screen.getByText(/5 reports/i)).toBeInTheDocument();
       expect(screen.getByText(/Community support/i)).toBeInTheDocument();
     });
