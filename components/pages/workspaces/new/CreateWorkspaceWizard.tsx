@@ -25,10 +25,10 @@ const getStepFieldNames = (
       return ["companyName", "subdomain"];
 
     case 2:
-      return ["plan"];
+      return ["billingEmail"];
 
     case 3:
-      return ["billingEmail"];
+      return ["plan"];
 
     default:
       return [];
@@ -123,9 +123,9 @@ export default function CreateWorkspaceWizard() {
 
       {step === 1 && <WorkspaceBasicsStep form={form} />}
 
-      {step === 2 && <WorkspacePlanStep form={form} />}
+      {step === 2 && <WorkspaceConfigStep form={form} />}
 
-      {step === 3 && <WorkspaceConfigStep form={form} />}
+      {step === 3 && <WorkspacePlanStep form={form} />}
 
       {step === 4 && <WorkspaceReviewStep form={form} />}
 
