@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { createWorkspaceSchema } from "@/lib/validations/workspace";
@@ -10,10 +11,11 @@ import type { CreateWorkspaceFormData } from "./types";
 
 import { getWorkspaceBaseDomain } from "./workspace-domain";
 import WorkspaceBasicsStep from "./steps/WorkspaceBasicsStep";
+import WorkspacePlanStep from "./steps/WorkspacePlanStep";
 import WorkspaceConfigStep from "./steps/WorkspaceConfigStep";
 import WorkspaceReviewStep from "./steps/WorkspaceReviewStep";
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 const getStepFieldNames = (
   currentStep: number,
@@ -21,8 +23,13 @@ const getStepFieldNames = (
   switch (currentStep) {
     case 1:
       return ["companyName", "subdomain"];
+
     case 2:
+      return ["plan"];
+
+    case 3:
       return ["billingEmail"];
+
     default:
       return [];
   }
@@ -34,13 +41,17 @@ export default function CreateWorkspaceWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<CreateWorkspaceFormData>({
-    resolver: zodResolver(createWorkspaceSchema),
+    resolver: zodResolver(createWorkspaceSchema) as unknown as Resolver<
+      CreateWorkspaceFormData,
+      any
+    >,
 
     defaultValues: {
       companyName: "",
       subdomain: "",
       billingEmail: "",
       logo: "",
+      plan: "free",
     },
   });
 
@@ -83,12 +94,6 @@ export default function CreateWorkspaceWizard() {
 
       const subdomain = result.workspace.subdomain;
 
-      /*
-       * Navigate to the newly created tenant.
-       *
-       * We deliberately derive the URL
-       * from the configured application base domain.
-       */
       window.location.href = `${window.location.protocol}//${subdomain}.${getWorkspaceBaseDomain()}`;
     } catch (error) {
       setSubmitError(
@@ -118,9 +123,11 @@ export default function CreateWorkspaceWizard() {
 
       {step === 1 && <WorkspaceBasicsStep form={form} />}
 
-      {step === 2 && <WorkspaceConfigStep form={form} />}
+      {step === 2 && <WorkspacePlanStep form={form} />}
 
-      {step === 3 && <WorkspaceReviewStep form={form} />}
+      {step === 3 && <WorkspaceConfigStep form={form} />}
+
+      {step === 4 && <WorkspaceReviewStep form={form} />}
 
       {submitError && (
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
