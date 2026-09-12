@@ -46,6 +46,8 @@ export const createWorkspaceSchema = z.object({
     .url("Logo must be a valid URL.")
     .optional()
     .or(z.literal("")),
+
+  plan: z.enum(["free", "pro", "enterprise"]).default("free"),
 });
 
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
