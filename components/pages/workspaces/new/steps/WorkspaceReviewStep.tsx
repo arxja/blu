@@ -3,6 +3,7 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import { createWorkspaceSchema } from "@/lib/validations/workspace";
+import { getPlanById } from "@/lib/constants";
 
 import { getWorkspaceBaseDomain } from "../workspace-domain";
 import type { CreateWorkspaceFormData } from "../types";
@@ -13,6 +14,7 @@ interface Props {
 
 export default function WorkspaceReviewStep({ form }: Props) {
   const values = createWorkspaceSchema.parse(form.getValues());
+  const plan = getPlanById(values.plan);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -34,6 +36,20 @@ export default function WorkspaceReviewStep({ form }: Props) {
 
           <dd className="text-sm font-medium">
             {values.subdomain}.{getWorkspaceBaseDomain()}
+          </dd>
+        </div>
+
+        <div className="flex justify-between py-4">
+          <dt className="text-sm text-slate-500">Plan</dt>
+
+          <dd className="text-sm font-medium">{plan?.name ?? values.plan}</dd>
+        </div>
+
+        <div className="flex justify-between py-4">
+          <dt className="text-sm text-slate-500">Billing</dt>
+
+          <dd className="text-sm font-medium">
+            ${plan?.price.monthly ?? 0}/month
           </dd>
         </div>
 

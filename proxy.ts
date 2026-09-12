@@ -12,6 +12,7 @@ const PUBLIC_ROUTES = [
   "/api/auth/sign-up",
   "/api/auth/sign-out",
   "/pricing",
+  "/"
 ];
 
 function isPublicRoute(pathname: string): boolean {
