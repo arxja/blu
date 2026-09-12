@@ -52,9 +52,12 @@ jobs:
           UPSTASH_REDIS_REST_TOKEN: "upstash_dummy_token"
           # Client-side (needed if any client config is imported)
           NEXT_PUBLIC_APP_NAME: "My App"
+          NEXT_PUBLIC_APP_BASE_DOMAIN: "example.com"
           NEXT_PUBLIC_API_URL: "/api"
           NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
           NEXT_PUBLIC_STRIPE_CHECKOUT_URL: "https://checkout.stripe.com"
+          NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID: "price_pro_monthly_dummy"
+          NEXT_PUBLIC_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: "price_enterprise_monthly_dummy"
           NEXT_PUBLIC_DEMO_MODE: "false"
 
   build:
@@ -103,7 +106,10 @@ jobs:
           UPSTASH_REDIS_REST_TOKEN: "upstash_dummy_token"
           # Client-side
           NEXT_PUBLIC_APP_NAME: "My App"
+          NEXT_PUBLIC_APP_BASE_DOMAIN: "example.com"
           NEXT_PUBLIC_API_URL: "/api"
           NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
           NEXT_PUBLIC_STRIPE_CHECKOUT_URL: "https://checkout.stripe.com"
+          NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID: "price_pro_monthly_dummy"
+          NEXT_PUBLIC_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: "price_enterprise_monthly_dummy"
           NEXT_PUBLIC_DEMO_MODE: "false"

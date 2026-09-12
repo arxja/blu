@@ -10,6 +10,11 @@ const clientSchema = z.object({
     .transform((v) => v === "true"),
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
   NEXT_PUBLIC_STRIPE_CHECKOUT_URL: z.string().default(""),
+  NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID: z.string().optional().default(""),
+  NEXT_PUBLIC_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: z
+    .string()
+    .optional()
+    .default(""),
   NEXT_PUBLIC_DEMO_MODE: z
     .string()
     .default("false")
