@@ -1,6 +1,6 @@
 import { WebhookEvent } from "@/types/types";
 import { idempotencyStore } from "@/lib/idempotency/mongo-idempotency-store";
-import Tenant from "@/lib/database/models/tenant.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
 import { getPlanById, PLANS } from "@/lib/constants";
 import { log } from "@/lib/logger";
 import { AppError } from "@/lib/errors";
@@ -80,8 +80,8 @@ async function handleCheckoutCompleted(event: WebhookEvent) {
 
   const ownerId = session.client_reference_id;
   let tenant = ownerId
-    ? await Tenant.findOne({ ownerId })
-    : await Tenant.findOne({ stripeCustomerId: customerId });
+    ? await TenantModel.findOne({ ownerId })
+    : await TenantModel.findOne({ stripeCustomerId: customerId });
 
   if (!tenant) {
     log.error(
@@ -119,7 +119,7 @@ async function handleSubscriptionDeleted(event: WebhookEvent) {
     return;
   }
 
-  const tenant = await Tenant.findOne({ stripeCustomerId: customerId });
+  const tenant = await TenantModel.findOne({ stripeCustomerId: customerId });
   if (!tenant) {
     log.warn("Tenant not found for subscription deleted", {
       customerId,
@@ -155,7 +155,7 @@ async function handleSubscriptionUpdated(event: WebhookEvent) {
     return;
   }
 
-  const tenant = await Tenant.findOne({ stripeCustomerId: customerId });
+  const tenant = await TenantModel.findOne({ stripeCustomerId: customerId });
   if (!tenant) {
     log.warn("Missing Tenant in subscription updated event", {
       customerId,
@@ -228,7 +228,7 @@ async function handleInvoicePaid(event: WebhookEvent) {
     return;
   }
 
-  const tenant = await Tenant.findOne({ stripeCustomerId: customerId });
+  const tenant = await TenantModel.findOne({ stripeCustomerId: customerId });
   if (!tenant) {
     log.warn("Missing Tenant in Invoice Paid event", {
       customerId,
@@ -266,7 +266,7 @@ async function handleInvoicePaymentFailed(event: WebhookEvent) {
     return;
   }
 
-  const tenant = await Tenant.findOne({ stripeCustomerId: customerId });
+  const tenant = await TenantModel.findOne({ stripeCustomerId: customerId });
   if (!tenant) {
     log.warn("Missing Tenant in Invoice Paid event", {
       customerId,
@@ -294,7 +294,7 @@ async function handleTrialWillEnd(event: WebhookEvent) {
     return;
   }
 
-  const tenant = await Tenant.findOne({ stripeCustomerId: customerId });
+  const tenant = await TenantModel.findOne({ stripeCustomerId: customerId });
   if (!tenant) {
     log.warn("Missing Tenant in subscription updated event", {
       customerId,
