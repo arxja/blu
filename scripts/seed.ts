@@ -3,16 +3,16 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 // Models
-import Tenant from "@/lib/database/models/tenant.model";
-import DashboardUser from "@/lib/database/models/dashboardUser.model";
-import Membership from "@/lib/database/models/membership.model";
-import ApiKey from "@/lib/database/models/apiKey.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
+import { MembershipModel } from "@/lib/database/models/membership.model";
 import Event from "@/lib/database/models/event.model";
-import Dashboard from "@/lib/database/models/dashboard.model";
-import Report from "@/lib/database/models/report.model";
-import Invitation from "@/lib/database/models/invitation.model";
+import { ReportModel } from "@/lib/database/models/report.model";
+import { InvitationModel } from "@/lib/database/models/invitation.model";
 import { connectDB } from "@/lib/database/mongoose";
 import { getTenantUrl } from "@/lib/tenancy/hostname";
+import { ApiKeyModel } from "@/lib/database/models/apiKey.model";
+import { DashboardModel } from "@/lib/database/models/dashboard.model";
+import { DashboardUserModel } from "@/lib/database/models/dashboard-user.model";
 
 // ========== Helper: generate API keys ==========
 function generateApiKey() {
@@ -101,14 +101,14 @@ async function seed() {
   // 1. Clear all collections
   console.log("🧹 Clearing existing data...");
   await Promise.all([
-    Tenant.deleteMany({}),
-    DashboardUser.deleteMany({}),
-    Membership.deleteMany({}),
-    ApiKey.deleteMany({}),
+    TenantModel.deleteMany({}),
+    DashboardUserModel.deleteMany({}),
+    MembershipModel.deleteMany({}),
+    ApiKeyModel.deleteMany({}),
     Event.deleteMany({}),
-    Dashboard.deleteMany({}),
-    Report.deleteMany({}),
-    Invitation.deleteMany({}),
+    DashboardModel.deleteMany({}),
+    ReportModel.deleteMany({}),
+    InvitationModel.deleteMany({}),
   ]);
   console.log("✅ Cleared\n");
 
@@ -116,7 +116,7 @@ async function seed() {
   const passwordHash = await bcrypt.hash("Test12341234", 10);
 
   const [ownerUser, adminUser, analystUser, viewerUser, soloUser] =
-    await DashboardUser.create([
+    await DashboardUserModel.create([
       {
         email: "owner@example.com",
         name: "Workspace Owner",
@@ -151,12 +151,12 @@ async function seed() {
   console.log("👥 Created 5 global users");
 
   // 3. Create demo tenant (workspace)
-  const tenant = await Tenant.create({
+  const tenant = await TenantModel.create({
     companyName: "Demo Workspace",
     subdomain: "demo",
     ownerId: ownerUser._id,
-    members: 4,
-    logo: "",
+    activeMemberCount: 4,
+    logoUrl: "",
     plan: "free",
     status: "active",
     billingEmail: ownerUser.email,
@@ -172,12 +172,12 @@ async function seed() {
   );
 
   // 3b. Create a second workspace with a single user for membership testing
-  const soloTenant = await Tenant.create({
+  const soloTenant = await TenantModel.create({
     companyName: "Membership Test Workspace",
     subdomain: "membership-test",
     ownerId: soloUser._id,
-    members: 1,
-    logo: "",
+    activeMemberCount: 1,
+    logoUrl: "",
     plan: "free",
     status: "active",
     billingEmail: soloUser.email,
@@ -193,7 +193,7 @@ async function seed() {
   );
 
   // 4. Create memberships (user -> tenant + role)
-  await Membership.create([
+  await MembershipModel.create([
     {
       userId: ownerUser._id,
       tenantId: tenant._id,
@@ -232,7 +232,7 @@ async function seed() {
   // 5. API keys for the tenant
   const prodKey = generateApiKey();
   const stagingKey = generateApiKey();
-  await ApiKey.create([
+  await ApiKeyModel.create([
     {
       tenantId: tenant._id,
       name: "Production Key",
@@ -258,10 +258,10 @@ async function seed() {
   console.log(`📊 Created ${events.length} random events`);
 
   // 7. Dashboards (using owner as creator)
-  await Dashboard.create([
+  await DashboardModel.create([
     {
       tenantId: tenant._id,
-      createdBy: ownerUser._id,
+      createdBy: ownerUser._id.toString(),
       name: "Sales Overview",
       widgets: [
         {
@@ -278,11 +278,11 @@ async function seed() {
         },
       ],
       isPublic: false,
-      sharedWith: [analystUser._id],
+      sharedWith: [analystUser._id.toString()],
     },
     {
       tenantId: tenant._id,
-      createdBy: analystUser._id,
+      createdBy: analystUser._id.toString(),
       name: "Traffic Sources",
       widgets: [
         {
@@ -305,7 +305,7 @@ async function seed() {
   console.log("📈 Created 2 dashboards");
 
   // 8. Reports (minimal)
-  await Report.create([
+  await ReportModel.create([
     {
       tenantId: tenant._id,
       createdBy: analystUser._id,
@@ -323,7 +323,7 @@ async function seed() {
   // 9. Invitation (pending)
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
-  await Invitation.create({
+  await InvitationModel.create({
     tenantId: tenant._id,
     invitedBy: ownerUser._id,
     email: "newuser@example.com",
