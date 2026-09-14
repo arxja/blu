@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import { MongoServerError } from "mongodb";
 import { connectDB } from "@/lib/database/mongoose";
-import Tenant from "@/lib/database/models/tenant.model";
-import Membership from "@/lib/database/models/membership.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
+import { MembershipModel } from "@/lib/database/models/membership.model";
 import { AppError } from "@/lib/errors";
 import {
   createWorkspaceSchema,
@@ -49,7 +49,7 @@ export async function createWorkspace(
          * The unique index on Tenant.subdomain remains
          * the authoritative concurrency guarantee.
          */
-        const existingTenant = await Tenant.findOne({
+        const existingTenant = await TenantModel.findOne({
           subdomain: input.subdomain,
         })
           .session(session)
@@ -59,30 +59,23 @@ export async function createWorkspace(
           throw AppError.conflict("This workspace subdomain is already taken.");
         }
 
-        const [createdTenant] = await Tenant.create(
+        const [createdTenant] = await TenantModel.create(
           [
             {
               companyName: input.companyName,
-
               subdomain: input.subdomain,
-
               ownerId: new mongoose.Types.ObjectId(userId),
-
-              members: 1,
-
-              logo: input.logo || "",
-
+              activeMemberCount: 1,
+              logoUrl: input.logo || "",
               plan: "free",
-
               status: "trialing",
-
               billingEmail: input.billingEmail,
             },
           ],
           { session },
         );
 
-        await Membership.create(
+        await MembershipModel.create(
           [
             {
               userId: new mongoose.Types.ObjectId(userId),
