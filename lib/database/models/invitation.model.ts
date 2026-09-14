@@ -1,32 +1,68 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import {
+  Schema,
+  model,
+  models,
+  type HydratedDocument,
+  type Model,
+  type Types,
+} from "mongoose";
+import { TenantRoles, type TenantRole } from "@/lib/tenancy/types";
 
-export interface IInvitation extends mongoose.Document {
-  tenantId: mongoose.Types.ObjectId;
-  invitedBy: string;
+// ---- Plain shape ----
+
+export type InvitationStatus = "pending" | "accepted" | "expired";
+
+export interface Invitation {
+  tenantId: Types.ObjectId;
+  invitedBy: Types.ObjectId;
   email: string;
-  role: "admin" | "analyst" | "viewer";
+  role: TenantRole;
   token: string;
   expiresAt: Date;
-  status: "pending" | "accepted" | "expired";
+  status: InvitationStatus;
   acceptedAt?: Date;
   createdAt: Date;
+  updatedAt: Date;
 }
 
-const InvitationSchema = new Schema<IInvitation>(
+export type InvitationDocument = HydratedDocument<Invitation>;
+
+// ---- Schema ----
+
+const InvitationSchema = new Schema<Invitation>(
   {
-    tenantId: { type: Schema.Types.ObjectId, required: true, ref: "Tenant" },
-    invitedBy: { type: String, required: true, ref: "DashboardUser" },
-    email: { type: String, required: true, lowercase: true },
+    tenantId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "Tenant",
+    },
+    invitedBy: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "DashboardUser",
+    },
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+    },
     role: {
       type: String,
-      enum: ["admin", "analyst", "viewer"],
+      enum: TenantRoles,
       required: true,
     },
-    token: { type: String, required: true, unique: true },
-    expiresAt: { type: Date, required: true },
+    token: {
+      type: String,
+      required: true,
+      unique: true, // index created automatically; no separate .index() call
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
     status: {
       type: String,
-      enum: ["pending", "accepted", "expired"],
+      enum: ["pending", "accepted", "expired"] satisfies InvitationStatus[],
       default: "pending",
     },
     acceptedAt: { type: Date },
@@ -34,10 +70,15 @@ const InvitationSchema = new Schema<IInvitation>(
   { timestamps: true },
 );
 
-// Indexes
-InvitationSchema.index({ token: 1 }, { unique: true });
+// Query: "pending invites for this tenant to this email"
 InvitationSchema.index({ tenantId: 1, email: 1 });
-InvitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // Auto-delete expired
+// Query: "all invites in this tenant by status"
+InvitationSchema.index({ tenantId: 1, status: 1 });
 
-export default models.Invitation ||
-  model<IInvitation>("Invitation", InvitationSchema);
+// NOTE: TTL intentionally omitted. If you want to auto-purge
+// expired invitations, add it back — but read the note above first,
+// because it also removes them from the UI.
+
+export const InvitationModel =
+  (models.Invitation as Model<Invitation>) ??
+  model<Invitation>("Invitation", InvitationSchema);
