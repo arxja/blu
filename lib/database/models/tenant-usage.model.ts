@@ -1,24 +1,59 @@
-import { Schema, models, model } from "mongoose";
+import {
+  Schema,
+  model,
+  models,
+  type HydratedDocument,
+  type Model,
+  type Types,
+} from "mongoose";
 
-export interface ITenantUsage {
-  tenantId: string;
+// ---- Plain shape ----
+
+export interface TenantUsage {
+  tenantId: Types.ObjectId;
   year: number;
-  month: number; // 0-11
+  /** 1-12. Not JS getMonth() (0-11) — normalize at the call site. */
+  month: number;
   count: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const TenantUsageSchema = new Schema<ITenantUsage>(
+export type TenantUsageDocument = HydratedDocument<TenantUsage>;
+
+// ---- Schema ----
+
+const TenantUsageSchema = new Schema<TenantUsage>(
   {
-    tenantId: { type: String, required: true },
-    year: { type: Number, required: true },
-    month: { type: Number, required: true },
-    count: { type: Number, default: 0 },
+    tenantId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "Tenant",
+    },
+    year: {
+      type: Number,
+      required: true,
+      min: 2000,
+      max: 9999,
+    },
+    month: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 12,
+    },
+    count: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true },
 );
 
-// Compound index for fast lookups
+// One row per tenant per month. Upsert target for `$inc`.
 TenantUsageSchema.index({ tenantId: 1, year: 1, month: 1 }, { unique: true });
 
-export default models.TenantUsage ||
-  model<ITenantUsage>("TenantUsage", TenantUsageSchema);
+export const TenantUsageModel =
+  (models.TenantUsage as Model<TenantUsage>) ??
+  model<TenantUsage>("TenantUsage", TenantUsageSchema);
