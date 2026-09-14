@@ -8,21 +8,45 @@ vi.mock("@/lib/database/mongoose", () => ({
   connectDB: vi.fn(),
 }));
 
-vi.mock("@/lib/database/models/tenant.model", () => ({
-  default: {
-    findById: (...args: unknown[]) => ({
-      exec: () => findTenantById(...args),
-    }),
-  },
-}));
+vi.mock("@/lib/database/models/tenant.model", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/database/models/tenant.model")
+  >("@/lib/database/models/tenant.model");
 
-vi.mock("@/lib/database/models/membership.model", () => ({
-  default: {
-    findOne: (...args: unknown[]) => ({
-      exec: () => findMembership(...args),
-    }),
-  },
-}));
+  return {
+    ...actual,
+    TenantModel: {
+      findById: (...args: unknown[]) => ({
+        exec: () => findTenantById(...args),
+      }),
+    },
+    default: {
+      findById: (...args: unknown[]) => ({
+        exec: () => findTenantById(...args),
+      }),
+    },
+  };
+});
+
+vi.mock("@/lib/database/models/membership.model", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/database/models/membership.model")
+  >("@/lib/database/models/membership.model");
+
+  return {
+    ...actual,
+    MembershipModel: {
+      findOne: (...args: unknown[]) => ({
+        exec: () => findMembership(...args),
+      }),
+    },
+    default: {
+      findOne: (...args: unknown[]) => ({
+        exec: () => findMembership(...args),
+      }),
+    },
+  };
+});
 
 import { authorizeTenantAccess } from "@/lib/tenancy/tenant-access";
 

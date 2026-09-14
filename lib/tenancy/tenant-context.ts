@@ -1,10 +1,9 @@
 import { connectDB } from "@/lib/database/mongoose";
-import Tenant from "@/lib/database/models/tenant.model";
-import Membership from "@/lib/database/models/membership.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
+import { MembershipModel } from "@/lib/database/models/membership.model";
 import { AppError } from "@/lib/errors";
 import { getCurrentUser } from "@/lib/auth/server";
-
-import type { TenantContext } from "@/types/tenancy";
+import type { TenantContext } from "./types";
 
 async function safeQueryResult<T>(query: {
   exec: () => Promise<T>;
@@ -52,7 +51,7 @@ export async function getTenantContext(
   await connectDB();
 
   const tenant = await safeQueryResult(
-    Tenant.findOne({
+    TenantModel.findOne({
       subdomain: normalizedSubdomain,
     }),
   );
@@ -66,7 +65,7 @@ export async function getTenantContext(
   }
 
   const membership = await safeQueryResult(
-    Membership.findOne({
+    MembershipModel.findOne({
       userId: user.id,
       tenantId: tenant._id,
       isActive: true,

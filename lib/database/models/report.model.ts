@@ -1,57 +1,114 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import {
+  Schema,
+  model,
+  models,
+  type HydratedDocument,
+  type Model,
+  type Types,
+} from "mongoose";
+import {
+  ReportConditionOperators,
+  ReportDateRanges,
+  ReportSchedules,
+  type ReportConditionOperator,
+  type ReportDateRange,
+  type ReportSchedule,
+} from "@/lib/reports/constants";
 
-export interface IReport extends mongoose.Document {
-  tenantId: mongoose.Types.ObjectId;
-  createdBy: string;
+// ---- Nested shapes ----
+
+export interface ReportCondition {
+  field: string;
+  operator: ReportConditionOperator;
+  value: unknown;
+}
+
+export interface ReportCustomDateRange {
+  start: Date;
+  end: Date;
+}
+
+export interface ReportFilters {
+  eventName: string;
+  conditions: ReportCondition[];
+  dateRange: ReportDateRange;
+  customDateRange?: ReportCustomDateRange;
+}
+
+// ---- Plain shape ----
+
+export interface Report {
+  tenantId: Types.ObjectId;
+  createdBy: Types.ObjectId;
   name: string;
   description?: string;
-  filters: {
-    eventName: string;
-    conditions: Array<{
-      field: string;
-      operator: "eq" | "neq" | "gt" | "lt" | "gte" | "lte" | "contains";
-      value: any;
-    }>;
-    dateRange:
-      | "today"
-      | "yesterday"
-      | "last_7_days"
-      | "last_30_days"
-      | "last_90_days"
-      | "custom";
-    customDateRange?: { start: Date; end: Date };
-  };
-  schedule: "manual" | "daily" | "weekly" | "monthly";
+  filters: ReportFilters;
+  schedule: ReportSchedule;
   lastRunAt?: Date;
   lastExportUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const ReportSchema = new Schema<IReport>(
+export type ReportDocument = HydratedDocument<Report>;
+
+// ---- Sub-schemas ----
+
+const ReportConditionSchema = new Schema<ReportCondition>(
   {
-    tenantId: { type: Schema.Types.ObjectId, required: true, ref: "Tenant" },
-    createdBy: { type: String, required: true, ref: "DashboardUser" },
+    field: { type: String, required: true },
+    operator: {
+      type: String,
+      enum: ReportConditionOperators,
+      required: true,
+    },
+    value: { type: Schema.Types.Mixed, required: true },
+  },
+  { _id: false },
+);
+
+const ReportCustomDateRangeSchema = new Schema<ReportCustomDateRange>(
+  {
+    start: { type: Date, required: true },
+    end: { type: Date, required: true },
+  },
+  { _id: false },
+);
+
+const ReportFiltersSchema = new Schema<ReportFilters>(
+  {
+    eventName: { type: String, required: true },
+    conditions: { type: [ReportConditionSchema], default: [] },
+    dateRange: {
+      type: String,
+      enum: ReportDateRanges,
+      required: true,
+    },
+    customDateRange: { type: ReportCustomDateRangeSchema },
+  },
+  { _id: false },
+);
+
+// ---- Schema ----
+
+const ReportSchema = new Schema<Report>(
+  {
+    tenantId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "Tenant",
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "DashboardUser",
+    },
     name: { type: String, required: true },
     description: { type: String },
-    filters: {
-      eventName: { type: String, required: true },
-      conditions: [
-        {
-          field: { type: String, required: true },
-          operator: { type: String, required: true },
-          value: { type: Schema.Types.Mixed, required: true },
-        },
-      ],
-      dateRange: { type: String, required: true },
-      customDateRange: {
-        start: { type: Date },
-        end: { type: Date },
-      },
-    },
+    filters: { type: ReportFiltersSchema, required: true },
     schedule: {
       type: String,
-      enum: ["manual", "daily", "weekly", "monthly"],
+      enum: ReportSchedules,
       default: "manual",
     },
     lastRunAt: { type: Date },
@@ -60,8 +117,16 @@ const ReportSchema = new Schema<IReport>(
   { timestamps: true },
 );
 
-// Indexes
+// Query: "list this tenant's reports created by user X"
 ReportSchema.index({ tenantId: 1, createdBy: 1 });
+
+// Query: "list this tenant's reports filtered by schedule" (UI)
 ReportSchema.index({ tenantId: 1, schedule: 1 });
 
-export default models.Report || model<IReport>("Report", ReportSchema);
+// Worker query: "find all reports due to run right now"
+// Different shape from the UI query above — add this if/when
+// you build the scheduler:
+// ReportSchema.index({ schedule: 1, lastRunAt: 1 });
+
+export const ReportModel =
+  (models.Report as Model<Report>) ?? model<Report>("Report", ReportSchema);

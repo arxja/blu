@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import DashboardUser from "@/lib/database/models/dashboardUser.model";
-import Tenant from "@/lib/database/models/tenant.model";
-import membershipModel from "@/lib/database/models/membership.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
+import {MembershipModel} from "@/lib/database/models/membership.model";
 import { signJWT } from "@/lib/auth/jwt";
 import { connectDB } from "@/lib/database/mongoose";
 import { Types } from "mongoose";
 import { serverConfig } from "@/lib/config";
+import { DashboardUserModel } from "@/lib/database/models/dashboard-user.model";
 
 interface PopulatedMembership {
   _id: Types.ObjectId;
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const user = await DashboardUser.findOne({ email: normalizedEmail });
+    const user = await DashboardUserModel.findOne({ email: normalizedEmail });
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const memberships = (await membershipModel
+    const memberships = (await MembershipModel
       .find({ userId: user._id, isActive: true })
       .populate<{
         tenantId: {
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
         };
       }>({
         path: "tenantId",
-        model: Tenant,
+        model: TenantModel,
         select: "companyName subdomain",
       })
       .lean()) as unknown as PopulatedMembership[];
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       role: m.role,
     }));
 
-    await DashboardUser.updateOne(
+    await DashboardUserModel.updateOne(
       { _id: user._id },
       { lastLoginAt: new Date() },
     );

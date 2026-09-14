@@ -47,11 +47,11 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 
 import { handleWebhookEvent } from "@/services/tenant-billing.service";
 import { idempotencyStore } from "@/lib/idempotency/mongo-idempotency-store";
-import Tenant from "@/lib/database/models/tenant.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
 import { PLANS } from "@/lib/constants";
-import { WebhookEvent } from "@/types/types";
 import { getEmailService } from "@/lib/email";
-import type { EmailService } from "@/types/types";
+import type { EmailService } from "@/lib/email/types";
+import { WebhookEvent } from "@/lib/payment-provider/types";
 
 vi.mock("@/lib/idempotency/mongo-idempotency-store");
 vi.mock("@/lib/database/models/tenant.model");
@@ -94,7 +94,7 @@ describe("handleWebhookEvent", () => {
     };
 
     vi.mocked(idempotencyStore.isProcessed).mockResolvedValue(false);
-    vi.mocked(Tenant.findOne).mockResolvedValue(mockTenant);
+    vi.mocked(TenantModel.findOne).mockResolvedValue(mockTenant);
   });
 
   const buildEvent = (overrides: Partial<WebhookEvent> = {}): WebhookEvent => ({
@@ -152,7 +152,7 @@ describe("handleWebhookEvent", () => {
   it("skips processing if idempotency key already exists", async () => {
     vi.mocked(idempotencyStore.isProcessed).mockResolvedValue(true);
     await handleWebhookEvent(buildEvent());
-    expect(Tenant.findOne).not.toHaveBeenCalled();
+    expect(TenantModel.findOne).not.toHaveBeenCalled();
     expect(idempotencyStore.markProcessed).not.toHaveBeenCalled();
   });
 
@@ -171,7 +171,7 @@ describe("handleWebhookEvent", () => {
   });
 
   it("does not update tenant when customer not found", async () => {
-    vi.mocked(Tenant.findOne).mockResolvedValue(null);
+    vi.mocked(TenantModel.findOne).mockResolvedValue(null);
     const event = buildEvent();
     await expect(handleWebhookEvent(event)).rejects.toThrow(
       "Tenant not found for checkout session",
@@ -245,7 +245,7 @@ describe("handleWebhookEvent", () => {
   });
 
   it("handles subscription updated with missing tenant", async () => {
-    vi.mocked(Tenant.findOne).mockResolvedValue(null);
+    vi.mocked(TenantModel.findOne).mockResolvedValue(null);
     const event = buildEvent({ type: "customer.subscription.updated" });
     // Should not throw, just log and return
     await expect(handleWebhookEvent(event)).resolves.not.toThrow();
@@ -253,7 +253,7 @@ describe("handleWebhookEvent", () => {
   });
 
   it("handles invoice payment failed with missing tenant", async () => {
-    vi.mocked(Tenant.findOne).mockResolvedValue(null);
+    vi.mocked(TenantModel.findOne).mockResolvedValue(null);
     const event = buildEvent({ type: "invoice.payment_failed" });
     await handleWebhookEvent(event);
     expect(mockTenant.save).not.toHaveBeenCalled();
@@ -266,6 +266,6 @@ describe("handleWebhookEvent", () => {
       data: { customer: undefined },
     });
     await handleWebhookEvent(event);
-    expect(Tenant.findOne).not.toHaveBeenCalled();
+    expect(TenantModel.findOne).not.toHaveBeenCalled();
   });
 });

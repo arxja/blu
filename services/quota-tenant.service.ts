@@ -1,7 +1,9 @@
-import Tenant from "@/lib/database/models/tenant.model";
-import TenantUsage from "@/lib/database/models/tenant-usage.model";
+import { Types } from "mongoose";
+import { TenantModel } from "@/lib/database/models/tenant.model";
 import { AppError } from "@/lib/errors";
 import { log } from "@/lib/logger";
+import { TenantUsageModel } from "@/lib/database/models/tenant-usage.model";
+import { getEffectiveQuotas } from "@/lib/tenancy/quotas";
 
 export type QuotaCheckResult = {
   allowed: boolean;
@@ -10,32 +12,29 @@ export type QuotaCheckResult = {
   limit?: number;
 };
 
-export class QuotaService {
-  constructor(private tenantId: string) {}
+const UNLIMITED = -1;
 
-  /**
-   * Fetch the tenant document with quotas.
-   * In a real app you might cache this for the request's duration.
-   */
-  public async getTenant() {
-    const tenant = await Tenant.findById(this.tenantId)
+export class QuotaService {
+  constructor(private tenantId: string | Types.ObjectId) {}
+
+  private async getTenant() {
+    const tenant = await TenantModel.findById(this.tenantId)
       .select("plan quotas status")
       .lean();
     if (!tenant) throw AppError.notFound("Tenant not found");
     return tenant;
   }
 
-  /**
-   * Check if the tenant can record an additional event this month.
-   */
-  async canTrackEvent(eventCount: number = 1): Promise<QuotaCheckResult> {
+  private async getQuotas() {
     const tenant = await this.getTenant();
-    const limit = tenant.quotas.monthlyEvents;
+    return getEffectiveQuotas(tenant);
+  }
 
-    // -1 means unlimited
-    if (limit === -1) return { allowed: true };
+  async canTrackEvent(eventCount: number = 1): Promise<QuotaCheckResult> {
+    const quotas = await this.getQuotas();
+    const limit = quotas.monthlyEvents;
+    if (limit === UNLIMITED) return { allowed: true };
 
-    // Read current monthly usage from a separate usage collection (see below)
     const currentUsage = await this.getCurrentMonthlyEvents();
     if (currentUsage + eventCount > limit) {
       return {
@@ -45,18 +44,13 @@ export class QuotaService {
         limit,
       };
     }
-
-    return { allowed: true };
+    return { allowed: true, currentUsage, limit };
   }
 
-  /**
-   * Check if a new team member can be invited.
-   */
   async canInviteMember(currentSeats: number): Promise<QuotaCheckResult> {
-    const tenant = await this.getTenant();
-    const limit = tenant.quotas.seats;
-
-    if (limit === -1) return { allowed: true };
+    const quotas = await this.getQuotas();
+    const limit = quotas.seats;
+    if (limit === UNLIMITED) return { allowed: true };
 
     if (currentSeats >= limit) {
       return {
@@ -66,73 +60,41 @@ export class QuotaService {
         limit,
       };
     }
-
-    return { allowed: true };
+    return { allowed: true, currentUsage: currentSeats, limit };
   }
 
-  /**
-   * Check if a new dashboard can be created.
-   */
-  async canCreateDashboard(currentCount: number): Promise<QuotaCheckResult> {
-    return this.checkCountLimit("dashboards", currentCount);
-  }
-
-  /**
-   * Check if a new report can be created.
-   */
-  async canCreateReport(currentCount: number): Promise<QuotaCheckResult> {
-    return this.checkCountLimit("reports", currentCount);
-  }
-
-  /**
-   * Resolve the tenant's effective API rate limit for Arcjet.
-   */
   async getApiRateLimit(): Promise<number> {
-    const tenant = await this.getTenant();
-    const limit = tenant.quotas?.apiRateLimit;
-
-    if (typeof limit !== "number") return 100;
-    return limit === -1 ? 10_000_000 : limit;
+    const quotas = await this.getQuotas();
+    const limit = quotas.apiRateLimit;
+    return limit === UNLIMITED ? 10_000_000 : limit;
   }
 
-  /**
-   * Check API rate limit (handled by middleware, but available as a method too).
-   */
-  async checkApiRateLimit(): Promise<QuotaCheckResult> {
-    const limit = await this.getApiRateLimit();
-    if (limit === 10_000_000) return { allowed: true, limit };
-
-    return { allowed: true, limit };
-  }
-
-  private async checkCountLimit(
-    resource: "dashboards" | "reports",
-    currentCount: number,
-  ): Promise<QuotaCheckResult> {
-    const tenant = await this.getTenant();
-    const limit = tenant.quotas[resource];
-    if (limit === -1) return { allowed: true };
-
-    if (currentCount >= limit) {
-      return {
-        allowed: false,
-        reason: `${resource} limit of ${limit} reached. Current: ${currentCount}`,
-        currentUsage: currentCount,
-        limit,
-      };
+  async incrementEventCount(amount: number = 1): Promise<void> {
+    const { year, month } = this.currentPeriod();
+    try {
+      await TenantUsageModel.updateOne(
+        { tenantId: this.tenantId, year, month },
+        { $inc: { count: amount } },
+        { upsert: true },
+      );
+    } catch (error) {
+      // Unique-index race under concurrent upserts: retry once as plain update.
+      if (isDuplicateKeyError(error)) {
+        await TenantUsageModel.updateOne(
+          { tenantId: this.tenantId, year, month },
+          { $inc: { count: amount } },
+        );
+        return;
+      }
+      log.error("Failed to increment event count", error as Error, {
+        tenantId: String(this.tenantId),
+      });
     }
-    return { allowed: true };
   }
 
-  /**
-   * Fetch current monthly event count from the usage tracker.
-   */
   private async getCurrentMonthlyEvents(): Promise<number> {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0-indexed
-
-    const doc = await TenantUsage.findOne({
+    const { year, month } = this.currentPeriod();
+    const doc = await TenantUsageModel.findOne({
       tenantId: this.tenantId,
       year,
       month,
@@ -140,21 +102,23 @@ export class QuotaService {
     return doc?.count ?? 0;
   }
 
-  async incrementEventCount(amount: number = 1): Promise<void> {
+  /**
+   * Returns the billing period in the model's convention:
+   * year as-is, month as 1-12 (NOT JS getMonth()'s 0-11).
+   * Period is UTC by convention — change here if you want
+   * tenant-local periods, but change it in ONE place.
+   */
+  private currentPeriod() {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-
-    try {
-      await TenantUsage.findOneAndUpdate(
-        { tenantId: this.tenantId, year, month },
-        { $inc: { count: amount } },
-        { upsert: true, new: true },
-      );
-    } catch (error) {
-      log.error("Failed to increment event count", error as Error, {
-        tenantId: this.tenantId,
-      });
-    }
+    return { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
   }
+}
+
+function isDuplicateKeyError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: number }).code === 11000
+  );
 }

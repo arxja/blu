@@ -1,73 +1,107 @@
-import mongoose, { Schema, models, model } from "mongoose";
+// lib/database/models/dashboard.model.ts
+import {
+  Schema,
+  model,
+  models,
+  type HydratedDocument,
+  type Model,
+  type Types,
+} from "mongoose";
 
-interface IWidget {
-  id: string;
-  type:
-    | "line_chart"
-    | "bar_chart"
-    | "pie_chart"
-    | "table"
-    | "funnel"
-    | "retention";
-  title: string;
-  query: {
-    eventName: string;
-    metric: "count" | "unique_users" | "sum" | "avg";
-    field?: string;
-    groupBy: "hour" | "day" | "week" | "month";
-    filters?: Record<string, any>;
-    dateRange: string;
-  };
-  position: { x: number; y: number; w: number; h: number };
+// ---- Nested widget types ----
+
+export type WidgetType =
+  | "line_chart"
+  | "bar_chart"
+  | "pie_chart"
+  | "table"
+  | "funnel"
+  | "retention";
+
+export type WidgetMetric = "count" | "unique_users" | "sum" | "avg";
+
+export type WidgetGroupBy = "hour" | "day" | "week" | "month";
+
+export interface WidgetQuery {
+  eventName: string;
+  metric: WidgetMetric;
+  field?: string;
+  groupBy: WidgetGroupBy;
+  filters?: Record<string, unknown>;
+  dateRange: string;
 }
 
-export interface IDashboard extends mongoose.Document {
-  tenantId: mongoose.Types.ObjectId;
+export interface WidgetPosition {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface Widget {
+  id: string;
+  type: WidgetType;
+  title: string;
+  query: WidgetQuery;
+  position: WidgetPosition;
+}
+
+// ---- Plain shape ----
+
+export interface Dashboard {
+  tenantId: Types.ObjectId;
   createdBy: string;
   name: string;
-  widgets: IWidget[];
+  widgets: Widget[];
   isPublic: boolean;
   sharedWith: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-const DashboardSchema = new Schema<IDashboard>(
+export type DashboardDocument = HydratedDocument<Dashboard>;
+
+// ---- Schema ----
+
+const WidgetSchema = new Schema<Widget>(
+  {
+    id: { type: String, required: true },
+    type: { type: String, required: true },
+    title: { type: String, required: true },
+    query: {
+      eventName: { type: String, required: true },
+      metric: { type: String, required: true },
+      field: { type: String },
+      groupBy: { type: String, required: true },
+      filters: { type: Schema.Types.Mixed },
+      dateRange: { type: String, required: true },
+    },
+    position: {
+      x: { type: Number, required: true },
+      y: { type: Number, required: true },
+      w: { type: Number, required: true },
+      h: { type: Number, required: true },
+    },
+  },
+  { _id: false },
+);
+
+const DashboardSchema = new Schema<Dashboard>(
   {
     tenantId: { type: Schema.Types.ObjectId, required: true, ref: "Tenant" },
     createdBy: { type: String, required: true, ref: "DashboardUser" },
     name: { type: String, required: true },
-    widgets: [
-      {
-        id: { type: String, required: true },
-        type: { type: String, required: true },
-        title: { type: String, required: true },
-        query: {
-          eventName: { type: String, required: true },
-          metric: { type: String, required: true },
-          field: { type: String },
-          groupBy: { type: String, required: true },
-          filters: { type: Schema.Types.Mixed },
-          dateRange: { type: String, required: true },
-        },
-        position: {
-          x: { type: Number, required: true },
-          y: { type: Number, required: true },
-          w: { type: Number, required: true },
-          h: { type: Number, required: true },
-        },
-      },
-    ],
+    widgets: [WidgetSchema],
     isPublic: { type: Boolean, default: false },
     sharedWith: [{ type: String, ref: "DashboardUser" }],
   },
   { timestamps: true },
 );
 
-// Indexes
 DashboardSchema.index({ tenantId: 1, createdBy: 1 });
 DashboardSchema.index({ tenantId: 1, isPublic: 1 });
 DashboardSchema.index({ sharedWith: 1 });
 
-export default models.Dashboard ||
-  model<IDashboard>("Dashboard", DashboardSchema);
+export const DashboardModel =
+  (models.Dashboard as Model<Dashboard>) ??
+  model<Dashboard>("Dashboard", DashboardSchema);

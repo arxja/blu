@@ -1,5 +1,5 @@
 import { AppError } from "@/lib/errors";
-import { TenantRole } from "@/types/tenancy";
+import type { TenantRole } from "./types";
 
 const ROLE_RANK: Record<TenantRole, number> = {
   viewer: 10,

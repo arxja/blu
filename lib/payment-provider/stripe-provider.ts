@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { serverConfig } from "../config";
-import { PaymentProvider, WebhookEvent } from "@/types/types";
 import { log } from "../logger/";
+import { PaymentProvider, WebhookEvent } from "./types";
 
 export class StripeProvider implements PaymentProvider {
   private stripe: Stripe;

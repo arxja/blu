@@ -1,5 +1,5 @@
-import { PaymentProvider } from "@/types/types";
 import { StripeProvider } from "./stripe-provider";
+import { PaymentProvider } from "./types";
 
 let stripeInstance: PaymentProvider | null = null;
 

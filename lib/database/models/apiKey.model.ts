@@ -1,11 +1,22 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import {
+  Schema,
+  model,
+  models,
+  type HydratedDocument,
+  type Model,
+  type Types,
+} from "mongoose";
 
-export interface IApiKey extends mongoose.Document {
-  tenantId: mongoose.Types.ObjectId;
+// ---- Plain shape: no mongoose methods, safe to use anywhere ----
+
+export type ApiKeyPermission = "track" | "identify" | "query";
+
+export interface ApiKey {
+  tenantId: Types.ObjectId;
   name: string;
   keyPrefix: string;
   keyHash: string;
-  permissions: ("track" | "identify" | "query")[];
+  permissions: ApiKeyPermission[];
   lastUsedAt?: Date;
   usageCount: number;
   isActive: boolean;
@@ -14,7 +25,13 @@ export interface IApiKey extends mongoose.Document {
   updatedAt: Date;
 }
 
-const ApiKeySchema = new Schema<IApiKey>(
+// ---- Mongoose document: only for code that actually calls .save() ----
+
+export type ApiKeyDocument = HydratedDocument<ApiKey>;
+
+// ---- Schema + model ----
+
+const ApiKeySchema = new Schema<ApiKey>(
   {
     tenantId: { type: Schema.Types.ObjectId, required: true, ref: "Tenant" },
     name: { type: String, required: true },
@@ -29,9 +46,9 @@ const ApiKeySchema = new Schema<IApiKey>(
   { timestamps: true },
 );
 
-// Indexes
 ApiKeySchema.index({ keyHash: 1 }, { unique: true });
 ApiKeySchema.index({ tenantId: 1, isActive: 1 });
 ApiKeySchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export default models.ApiKey || model<IApiKey>("ApiKey", ApiKeySchema);
+export const ApiKeyModel =
+  (models.ApiKey as Model<ApiKey>) ?? model<ApiKey>("ApiKey", ApiKeySchema);

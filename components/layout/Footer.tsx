@@ -1,7 +1,7 @@
 "use client";
 
 import { FOOTER_ITEMS } from "@/lib/constants";
-import { NavItemsTypes } from "@/types/types";
+import type { NavItem } from "./types";
 import { Globe, MessageCircle, Send } from "lucide-react";
 import Link from "next/link";
 
@@ -10,7 +10,7 @@ function FooterColumn({
   links,
 }: {
   heading: string;
-  links: NavItemsTypes[];
+  links: NavItem[];
 }) {
   return (
     <div>

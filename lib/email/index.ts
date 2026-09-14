@@ -1,4 +1,4 @@
-import { EmailService } from "@/types/types";
+import { EmailService } from "@/lib/email/types";
 import { NoopEmailService } from "../noop-email-service";
 // import { SmtpEmailService } from './smtp-email-service'; // to be built later
 

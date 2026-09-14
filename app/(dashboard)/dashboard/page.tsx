@@ -4,8 +4,8 @@ import { getCurrentUser } from "@/lib/auth/server";
 // Ensure this route is always rendered dynamically because it reads cookies/user session
 export const dynamic = "force-dynamic";
 import { connectDB } from "@/lib/database/mongoose";
-import Membership from "@/lib/database/models/membership.model";
-import Tenant from "@/lib/database/models/tenant.model";
+import { MembershipModel } from "@/lib/database/models/membership.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
 import { Types } from "mongoose";
 import { logger } from "@/lib/logger";
 import { getCachedUserWorkspaces, setCachedUserWorkspaces } from "@/lib/redis";
@@ -70,7 +70,7 @@ const page = async () => {
     );
 
     await connectDB();
-    const memberships = (await Membership.find({
+    const memberships = (await MembershipModel.find({
       userId: user.id,
       isActive: true,
     })
@@ -84,8 +84,8 @@ const page = async () => {
         };
       }>({
         path: "tenantId",
-        model: Tenant,
-        select: "companyName subdomain members logo",
+        model: TenantModel,
+        select: "companyName subdomain members logoUrl",
       })
       .lean()) as unknown as PopulatedMembership[];
 

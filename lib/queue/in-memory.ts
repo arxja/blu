@@ -1,4 +1,4 @@
-import { QueueAdapter, QueueJob } from "@/types/types";
+import { QueueAdapter, QueueJob } from "@/lib/queue/types";
 import { log } from "@/lib/logger";
 
 export class InMemoryQueue implements QueueAdapter {

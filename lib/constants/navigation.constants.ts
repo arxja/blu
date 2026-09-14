@@ -1,6 +1,6 @@
-import { FooterItemsType, NavItemsTypes, UserDropdownItems } from "@/types/types";
+import type { FooterGroup, NavItem, UserDropdownGroup } from "@/components/layout/types";
 
-export const NAVBAR_ITEMS: NavItemsTypes[] = [
+export const NAVBAR_ITEMS: NavItem[] = [
   {
     name: "Pricing",
     link: "/pricing",
@@ -15,7 +15,7 @@ export const NAVBAR_ITEMS: NavItemsTypes[] = [
   },
 ];
 
-export const USER_DROPDOWN_ITEMS: UserDropdownItems[] = [
+export const USER_DROPDOWN_ITEMS: UserDropdownGroup[] = [
   {
     groupName: "Account",
     items: [
@@ -44,7 +44,7 @@ export const USER_DROPDOWN_ITEMS: UserDropdownItems[] = [
   }
 ];
 
-export const FOOTER_ITEMS: FooterItemsType[] = [
+export const FOOTER_ITEMS: FooterGroup[] = [
   {
     heading: "Product",
     links: [
@@ -83,6 +83,6 @@ export const FOOTER_ITEMS: FooterItemsType[] = [
   },
 ];
 
-export const MOBILE_NAV_ITEMS: NavItemsTypes[] = [
+export const MOBILE_NAV_ITEMS: NavItem[] = [
   // Add mobile-specific navigation items
 ];

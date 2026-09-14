@@ -1,8 +1,8 @@
 import { Types } from "mongoose";
 
 import { connectDB } from "@/lib/database/mongoose";
-import Tenant from "@/lib/database/models/tenant.model";
-import Membership from "@/lib/database/models/membership.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
+import { MembershipModel } from "@/lib/database/models/membership.model";
 import { AppError } from "@/lib/errors";
 
 export async function authorizeTenantAccess(userId: string, tenantId: string) {
@@ -16,7 +16,7 @@ export async function authorizeTenantAccess(userId: string, tenantId: string) {
 
   await connectDB();
 
-  const tenant = await Tenant.findById(tenantId).exec();
+  const tenant = await TenantModel.findById(tenantId).exec();
 
   if (!tenant) {
     throw AppError.notFound("Workspace not found.");
@@ -26,7 +26,7 @@ export async function authorizeTenantAccess(userId: string, tenantId: string) {
     throw AppError.forbidden("This workspace has been suspended.");
   }
 
-  const membership = await Membership.findOne({
+  const membership = await MembershipModel.findOne({
     userId,
     tenantId: tenant._id,
     isActive: true,

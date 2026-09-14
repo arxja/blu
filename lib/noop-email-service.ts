@@ -1,4 +1,4 @@
-import { EmailService } from "@/types/types";
+import { EmailService } from "@/lib/email/types";
 import { log } from "@/lib/logger/index";
 
 export class NoopEmailService implements EmailService {

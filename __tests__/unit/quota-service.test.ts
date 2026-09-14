@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QuotaService } from "@/services/quota-tenant.service";
-import Tenant from "@/lib/database/models/tenant.model";
-import TenantUsage from "@/lib/database/models/tenant-usage.model";
+import { TenantUsageModel } from "@/lib/database/models/tenant-usage.model";
+import { TenantModel } from "@/lib/database/models/tenant.model";
 
 vi.mock("@/lib/database/models/tenant.model");
 vi.mock("@/lib/database/models/tenant-usage.model");
@@ -29,10 +29,10 @@ describe("QuotaService", () => {
     };
     const usageData = { count: 500 };
 
-    vi.mocked(Tenant.findById).mockReturnValue(
+    vi.mocked(TenantModel.findById).mockReturnValue(
       mockQueryWithLean(tenantData) as any,
     );
-    vi.mocked(TenantUsage.findOne).mockReturnValue(
+    vi.mocked(TenantUsageModel.findOne).mockReturnValue(
       mockQueryWithLean(usageData) as any,
     );
 
@@ -45,10 +45,10 @@ describe("QuotaService", () => {
     const tenantData = { quotas: { monthlyEvents: 1000 } };
     const usageData = { count: 1000 };
 
-    vi.mocked(Tenant.findById).mockReturnValue(
+    vi.mocked(TenantModel.findById).mockReturnValue(
       mockQueryWithLean(tenantData) as any,
     );
-    vi.mocked(TenantUsage.findOne).mockReturnValue(
+    vi.mocked(TenantUsageModel.findOne).mockReturnValue(
       mockQueryWithLean(usageData) as any,
     );
 
@@ -61,7 +61,7 @@ describe("QuotaService", () => {
   it("allows unlimited (-1) resources", async () => {
     const tenantData = { quotas: { seats: -1 } };
 
-    vi.mocked(Tenant.findById).mockReturnValue(
+    vi.mocked(TenantModel.findById).mockReturnValue(
       mockQueryWithLean(tenantData) as any,
     );
 
@@ -73,7 +73,7 @@ describe("QuotaService", () => {
   it("returns the tenant-specific API rate limit", async () => {
     const tenantData = { quotas: { apiRateLimit: 250 } };
 
-    vi.mocked(Tenant.findById).mockReturnValue(
+    vi.mocked(TenantModel.findById).mockReturnValue(
       mockQueryWithLean(tenantData) as any,
     );
 
@@ -86,7 +86,7 @@ describe("QuotaService", () => {
   it("maps unlimited API rate limits to a very high fallback", async () => {
     const tenantData = { quotas: { apiRateLimit: -1 } };
 
-    vi.mocked(Tenant.findById).mockReturnValue(
+    vi.mocked(TenantModel.findById).mockReturnValue(
       mockQueryWithLean(tenantData) as any,
     );
 
