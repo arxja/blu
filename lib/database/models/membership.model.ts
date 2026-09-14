@@ -72,3 +72,5 @@ MembershipSchema.index({ userId: 1, isActive: 1 });
 export const MembershipModel =
   (models.Membership as Model<Membership>) ??
   model<Membership>("Membership", MembershipSchema);
+
+export default MembershipModel;
