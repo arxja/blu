@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import dashboardUserModel from "@/lib/database/models/dashboardUser.model";
 import { signJWT } from "@/lib/auth/jwt";
 import { connectDB } from "@/lib/database/mongoose";
 import { serverConfig } from "@/lib/config";
+import { DashboardUserModel } from "@/lib/database/models/dashboard-user.model";
 
 const signUpSchema = z.object({
   email: z.string().email(),
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const existing = await dashboardUserModel.findOne({
+    const existing = await DashboardUserModel.findOne({
       email: normalizedEmail,
     });
     if (existing) {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await dashboardUserModel.create({
+    const user = await DashboardUserModel.create({
       email: normalizedEmail,
       name,
       passwordHash,

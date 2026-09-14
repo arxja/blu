@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAuthToken, verifyJWT } from "@/lib/auth/jwt";
-import dashboardUserModel from "@/lib/database/models/dashboardUser.model";
 import { AppError } from "@/lib/errors";
 import { log } from "@/lib/logger";
 import { connectDB } from "@/lib/database/mongoose";
+import { DashboardUserModel } from "@/lib/database/models/dashboard-user.model";
 
 export async function GET() {
   const token = await getAuthToken();
@@ -17,9 +17,9 @@ export async function GET() {
   }
   try {
     await connectDB();
-    const user = await dashboardUserModel
-      .findById(payload.userId)
-      .select("-passwordHash");
+    const user = await DashboardUserModel.findById(payload.userId).select(
+      "-passwordHash",
+    );
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
