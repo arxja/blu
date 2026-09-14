@@ -130,3 +130,5 @@ TenantSchema.index({ status: 1, trialEndsAt: 1 });
 
 export const TenantModel =
   (models.Tenant as Model<Tenant>) ?? model<Tenant>("Tenant", TenantSchema);
+
+export default TenantModel;
