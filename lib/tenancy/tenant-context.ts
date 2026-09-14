@@ -3,8 +3,7 @@ import { TenantModel } from "@/lib/database/models/tenant.model";
 import { MembershipModel } from "@/lib/database/models/membership.model";
 import { AppError } from "@/lib/errors";
 import { getCurrentUser } from "@/lib/auth/server";
-
-import type { TenantContext } from "@/types/tenancy";
+import type { TenantContext } from "./types";
 
 async function safeQueryResult<T>(query: {
   exec: () => Promise<T>;
