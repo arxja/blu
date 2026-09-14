@@ -1,15 +1,15 @@
 import { log } from "@/lib/logger";
-import ProcessedWebhook from "@/lib/database/models/processedWebhook.model";
+import { ProcessedWebhookModel } from "@/lib/database/models/processed-webhook.model";
 
 export class MongoIdempotencyStore {
   async isProcessed(eventId: string): Promise<boolean> {
-    const existing = await ProcessedWebhook.exists({ eventId });
+    const existing = await ProcessedWebhookModel.exists({ eventId });
     return !!existing;
   }
 
   async markProcessed(eventId: string): Promise<void> {
     try {
-      await ProcessedWebhook.create({ eventId });
+      await ProcessedWebhookModel.create({ eventId });
     } catch (error: any) {
       // duplicate key error → already processed, fine
       if (error.code === 11000) {
