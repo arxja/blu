@@ -39,3 +39,5 @@ ProcessedWebhookSchema.index(
 export const ProcessedWebhookModel =
   (models.ProcessedWebhook as Model<ProcessedWebhook>) ??
   model<ProcessedWebhook>("ProcessedWebhook", ProcessedWebhookSchema);
+
+export default ProcessedWebhookModel;
