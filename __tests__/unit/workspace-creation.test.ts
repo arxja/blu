@@ -49,8 +49,9 @@ const validInput = {
   companyName: "Acme Inc",
   subdomain: "acme",
   billingEmail: "billing@acme.com",
+  plan: "free",
   logo: "",
-};
+} as const;
 
 const createdTenant = {
   _id: TENANT_ID,
@@ -170,6 +171,7 @@ describe("createWorkspace", () => {
       subdomain: " ACME ",
       billingEmail: "BILLING@ACME.COM ",
       logo: "",
+      plan: "free",
     });
 
     expect(mocks.tenantFindOne).toHaveBeenCalledWith({
@@ -207,6 +209,7 @@ describe("createWorkspace", () => {
         subdomain: "INVALID SUBDOMAIN!",
         billingEmail: "not-an-email",
         logo: "",
+        plan: "free",
       }),
     ).rejects.toMatchObject({
       statusCode: 400,
