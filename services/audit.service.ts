@@ -1,7 +1,7 @@
 import { connectDB } from "@/lib/database/mongoose";
 import { requestContext } from "@/lib/logger";
-import { AuditEventInput } from "@/types/audit";
-import AuditLog from "@/lib/database/models/auditLog.model";
+import type { AuditEventInput } from "@/lib/audit/types";
+import { AuditLogModel } from "@/lib/database/models/auditLog.model";
 import mongoose from "mongoose";
 
 export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
@@ -9,7 +9,7 @@ export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
 
   await connectDB();
 
-  await AuditLog.create({
+  await AuditLogModel.create({
     tenantId: new mongoose.Types.ObjectId(input.tenantId.toString()),
 
     actorId: input.actorId

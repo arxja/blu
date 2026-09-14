@@ -1,8 +1,8 @@
 import { getAuthToken, verifyJWT } from "@/lib/auth/jwt";
 import { connectDB } from "@/lib/database/mongoose";
-import DashboardUser from "@/lib/database/models/dashboardUser.model";
 import { log } from "../logger";
 import { AppError } from "../errors";
+import { DashboardUserModel } from "../database/models/dashboard-user.model";
 
 export async function getCurrentUser() {
   try {
@@ -17,7 +17,7 @@ export async function getCurrentUser() {
     }
 
     await connectDB();
-    const user = await DashboardUser.findById(payload.userId)
+    const user = await DashboardUserModel.findById(payload.userId)
       .select("name email isActive")
       .lean();
 
