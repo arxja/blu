@@ -10,7 +10,11 @@ const { connectDB, findOne, create, hash } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/database/mongoose", () => ({ connectDB }));
-vi.mock("@/lib/database/models/dashboardUser.model", () => ({
+vi.mock("@/lib/database/models/dashboard-user.model", () => ({
+  DashboardUserModel: {
+    findOne,
+    create,
+  },
   default: {
     findOne,
     create,

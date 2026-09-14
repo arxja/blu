@@ -18,12 +18,18 @@ vi.mock("@/lib/database/mongoose", () => ({
 }));
 
 vi.mock("@/lib/database/models/tenant.model", () => ({
+  TenantModel: {
+    findOne: mocks.tenantFindOne,
+  },
   default: {
     findOne: mocks.tenantFindOne,
   },
 }));
 
 vi.mock("@/lib/database/models/membership.model", () => ({
+  MembershipModel: {
+    findOne: mocks.membershipFindOne,
+  },
   default: {
     findOne: mocks.membershipFindOne,
   },

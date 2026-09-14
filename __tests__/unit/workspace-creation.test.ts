@@ -19,6 +19,10 @@ vi.mock("@/lib/database/mongoose", () => ({
 }));
 
 vi.mock("@/lib/database/models/tenant.model", () => ({
+  TenantModel: {
+    findOne: mocks.tenantFindOne,
+    create: mocks.tenantCreate,
+  },
   default: {
     findOne: mocks.tenantFindOne,
     create: mocks.tenantCreate,
@@ -26,6 +30,9 @@ vi.mock("@/lib/database/models/tenant.model", () => ({
 }));
 
 vi.mock("@/lib/database/models/membership.model", () => ({
+  MembershipModel: {
+    create: mocks.membershipCreate,
+  },
   default: {
     create: mocks.membershipCreate,
   },
@@ -50,7 +57,7 @@ const validInput = {
   subdomain: "acme",
   billingEmail: "billing@acme.com",
   plan: "free",
-  logo: "",
+  logoUrl: "",
 } as const;
 
 const createdTenant = {
@@ -58,8 +65,8 @@ const createdTenant = {
   companyName: "Acme Inc",
   subdomain: "acme",
   ownerId: USER_ID,
-  members: 1,
-  logo: "",
+  activeMemberCount: 1,
+  logoUrl: "",
   plan: "free",
   status: "trialing",
   billingEmail: "billing@acme.com",
@@ -137,7 +144,7 @@ describe("createWorkspace", () => {
       ownerId: expect.objectContaining({
         toString: expect.any(Function),
       }),
-      members: 1,
+      activeMemberCount: 1,
       plan: "free",
       status: "trialing",
       billingEmail: "billing@acme.com",
