@@ -38,3 +38,5 @@ const DashboardUserSchema = new Schema<DashboardUser>(
 export const DashboardUserModel =
   (models.DashboardUser as Model<DashboardUser>) ??
   model<DashboardUser>("DashboardUser", DashboardUserSchema);
+
+export default DashboardUserModel;
