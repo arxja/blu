@@ -1,4 +1,4 @@
-import { WebhookEvent } from "@/types/types";
+import { WebhookEvent } from "@/lib/payment-provider/types";
 import { idempotencyStore } from "@/lib/idempotency/mongo-idempotency-store";
 import { TenantModel } from "@/lib/database/models/tenant.model";
 import { getPlanById, PLANS } from "@/lib/constants";

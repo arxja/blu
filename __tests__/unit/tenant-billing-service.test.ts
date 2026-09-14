@@ -49,9 +49,9 @@ import { handleWebhookEvent } from "@/services/tenant-billing.service";
 import { idempotencyStore } from "@/lib/idempotency/mongo-idempotency-store";
 import { TenantModel } from "@/lib/database/models/tenant.model";
 import { PLANS } from "@/lib/constants";
-import { WebhookEvent } from "@/types/types";
 import { getEmailService } from "@/lib/email";
-import type { EmailService } from "@/types/types";
+import type { EmailService } from "@/lib/email/types";
+import { WebhookEvent } from "@/lib/payment-provider/types";
 
 vi.mock("@/lib/idempotency/mongo-idempotency-store");
 vi.mock("@/lib/database/models/tenant.model");
