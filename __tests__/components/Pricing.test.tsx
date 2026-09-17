@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Pricing from "@/components/pages/pricing";
 import { getClientConfig } from "@/lib/config/config-client";
@@ -85,15 +85,52 @@ describe("Pricing Component", () => {
 
     it("renders limit indicators for Pro plan", () => {
       render(<Pricing />);
-      const proElements = screen.getAllByText(/Pro/);
-      const proCard = proElements[0].closest(".relative");
 
-      expect(proCard?.textContent).toContain("API Rate Limit");
-      expect(proCard?.textContent).toContain("Data Retention");
-      expect(proCard?.textContent).toContain("Team Seats");
-      expect(proCard?.textContent).toContain("1,000 req/min");
-      expect(proCard?.textContent).toContain("180 days");
-      expect(proCard?.textContent).toContain("10");
+      // Anchor on the heading role, not a regex over the whole tree.
+      const proHeading = screen.getByRole("heading", { name: "Pro", level: 2 });
+      const proCard = proHeading.closest("[data-testid='pricing-card']");
+
+      expect(proCard).not.toBeNull();
+      const text = proCard!.textContent ?? "";
+
+      // Row labels
+      expect(text).toContain("Event throughput");
+      expect(text).toContain("API rate limit");
+      expect(text).toContain("Data retention");
+      expect(text).toContain("Team seats");
+
+      // Values — derived from PLANS.pro.limits
+      expect(text).toContain("500 /sec"); // ingestionEventsPerSec
+      expect(text).toContain("5,000 burst"); // ingestionBurstEvents
+      expect(text).toContain("300 /min"); // dashboardRequestsPerMinPerUser
+      expect(text).toContain("3,000 /min org-wide · 10 seats"); // perTenant + seats
+      expect(text).toContain("180 days"); // dataRetentionDays
+    });
+
+    it("renders Unlimited seats for Enterprise plan", () => {
+      render(<Pricing />);
+
+      const entHeading = screen.getByRole("heading", {
+        name: "Enterprise",
+        level: 2,
+      });
+      const entCard = entHeading.closest("[data-testid='pricing-card']");
+
+      expect(entCard).not.toBeNull();
+      const text = entCard!.textContent ?? "";
+
+      expect(text).toContain("5,000 /sec");
+      expect(text).toContain("50,000 burst");
+      expect(text).toContain("1,000 /min");
+      expect(text).toContain("30,000 /min org-wide");
+      expect(text).toContain("Unlimited");
+
+      // Scope the "no seat count in hint" assertion to the API rate limit row only
+      const apiRow = within(entCard as HTMLElement)
+        .getByText("API rate limit")
+        .closest("div");
+      expect(apiRow?.textContent).toContain("30,000 /min org-wide");
+      expect(apiRow?.textContent).not.toMatch(/\d+\s+seats/);
     });
   });
 
