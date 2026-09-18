@@ -104,6 +104,10 @@ export const PLANS_BY_ID = PLANS.reduce(
 );
 
 // Lookup function
-export const getPlanById = (id: string): Plan | undefined => {
-  return PLANS_BY_ID[id as PlanId];
+export const getPlanById = (id: string): Plan => {
+  const plan = PLANS_BY_ID[id as PlanId];
+  if (!plan) {
+    throw new Error(`Unknown plan id: ${id}`);
+  }
+  return plan;
 };
