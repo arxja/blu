@@ -29,8 +29,12 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),
   // Auth
-  AUTH_ATTEMPTS_PER_5_MIN: z.number().default(5),
-  AUTH_WINDOW: z.number().default(5 * 60 * 1000), // 5 minutes
+  AUTH_ATTEMPTS_PER_5_MIN: z.coerce.number().int().positive().default(5),
+  AUTH_WINDOW: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(5 * 60 * 1000), // 5 minutes
   AUTH_COOKIE_DOMAIN: z.string().optional(),
   AUTH_COOKIE_SECURE: z
     .string()

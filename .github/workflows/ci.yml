@@ -50,8 +50,8 @@ jobs:
           ARCJET_KEY: "ajkey_dummy"
           UPSTASH_REDIS_REST_URL: "upstash_dummy"
           UPSTASH_REDIS_REST_TOKEN: "upstash_dummy_token"
-          AUTH_ATTEMPTS_PER_5_MIN: 5,
-          AUTH_WINDOW: 5 * 60 * 1000,
+          AUTH_ATTEMPTS_PER_5_MIN: 5
+          AUTH_WINDOW: 300000
           # Client-side (needed if any client config is imported)
           NEXT_PUBLIC_APP_NAME: "My App"
           NEXT_PUBLIC_APP_BASE_DOMAIN: "example.com"
@@ -106,6 +106,8 @@ jobs:
           ARCJET_KEY: ajkey_dummy
           UPSTASH_REDIS_REST_URL: "https://upstash_dummy.io"
           UPSTASH_REDIS_REST_TOKEN: "upstash_dummy_token"
+          AUTH_ATTEMPTS_PER_5_MIN: 5
+          AUTH_WINDOW: 300000
           # Client-side
           NEXT_PUBLIC_APP_NAME: "My App"
           NEXT_PUBLIC_APP_BASE_DOMAIN: "example.com"
