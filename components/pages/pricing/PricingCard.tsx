@@ -20,6 +20,7 @@ const PricingCard = ({
 }: PricingCardProps) => {
   const isPopular = plan.badge === "Most Popular";
   const isEnterprise = plan.id === "enterprise";
+  const { limits } = plan;
 
   const getDisplayPrice = () => {
     if (plan.id === "free") return "$0";
@@ -53,6 +54,7 @@ const PricingCard = ({
   return (
     <div
       ref={(el) => cardRef(el)}
+      data-testid="pricing-card"
       className="relative rounded-2xl transition-all duration-300 hover:-translate-y-2"
       style={{
         backgroundColor: "var(--color-card)",
@@ -156,44 +158,65 @@ const PricingCard = ({
             className="mt-6 pt-4 border-t"
             style={{ borderColor: "var(--color-border-light)" }}
           >
-            <div className="flex justify-between text-xs mb-1">
-              <span style={{ color: "var(--color-text-tertiary)" }}>
-                API Rate Limit
-              </span>
-              <span
-                style={{ color: "var(--color-text-secondary)" }}
-                className="font-mono"
-              >
-                {plan.limits.apiRateLimit.toLocaleString()} req/min
-              </span>
-            </div>
-            <div className="flex justify-between text-xs mb-1">
-              <span style={{ color: "var(--color-text-tertiary)" }}>
-                Data Retention
-              </span>
-              <span
-                style={{ color: "var(--color-text-secondary)" }}
-                className="font-mono"
-              >
-                {plan.limits.dataRetentionDays} days
-              </span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span style={{ color: "var(--color-text-tertiary)" }}>
-                Team Seats
-              </span>
-              <span
-                style={{ color: "var(--color-text-secondary)" }}
-                className="font-mono"
-              >
-                {plan.limits.seats === -1 ? "Unlimited" : plan.limits.seats}
-              </span>
-            </div>
+            <LimitRow
+              label="Event throughput"
+              value={`${limits.ingestionEventsPerSec.toLocaleString()} /sec`}
+              hint={`${limits.ingestionBurstEvents.toLocaleString()} burst`}
+            />
+            <LimitRow
+              label="API rate limit"
+              value={`${limits.dashboardRequestsPerMinPerUser.toLocaleString()} /min`}
+              hint={
+                limits.seats === -1
+                  ? `${limits.dashboardRequestsPerMinPerTenant.toLocaleString()} /min org-wide`
+                  : `${limits.dashboardRequestsPerMinPerTenant.toLocaleString()} /min org-wide · ${limits.seats} seats`
+              }
+            />
+            <LimitRow
+              label="Data retention"
+              value={`${limits.dataRetentionDays} days`}
+            />
+            <LimitRow
+              label="Team seats"
+              value={limits.seats === -1 ? "Unlimited" : String(limits.seats)}
+            />
           </div>
         )}
       </div>
     </div>
   );
 };
+
+function LimitRow({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="flex justify-between items-baseline text-xs mb-1.5 last:mb-0">
+      <span style={{ color: "var(--color-text-tertiary)" }}>{label}</span>
+      <span className="text-right">
+        <span
+          className="font-mono"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          {value}
+        </span>
+        {hint && (
+          <span
+            className="block text-[10px] mt-0.5"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {hint}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
 
 export default PricingCard;

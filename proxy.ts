@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { verifyJWT } from "@/lib/auth/jwt";
 import { resolveHost } from "@/lib/tenancy/hostname";
 import { serverConfig } from "@/lib/config";
+import { authAj } from "@/lib/arcjet/auth";
 
 const PUBLIC_ROUTES = [
   "/sign-in",
@@ -12,7 +13,7 @@ const PUBLIC_ROUTES = [
   "/api/auth/sign-up",
   "/api/auth/sign-out",
   "/pricing",
-  "/"
+  "/",
 ];
 
 function isPublicRoute(pathname: string): boolean {
@@ -32,7 +33,7 @@ function getControlPlaneUrl(pathname = "/"): URL {
   return url;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const hostContext = resolveHost(request.headers.get("host"));
@@ -46,6 +47,48 @@ export function proxy(request: NextRequest) {
    */
   if (pathname.startsWith("/api/")) {
     return NextResponse.next();
+  }
+
+  /*
+   * ----------------------------------------------------------
+   * AUTH ROUTE PROTECTION (bot detection + rate limiting)
+   * ----------------------------------------------------------
+   */
+  if (pathname === "/sign-in" || pathname === "/sign-up") {
+    // Second argument is REQUIRED by the SDK types.
+    // Pass {} for IP-based auto-detection, or { ipSrc } if
+    // you have already resolved a trusted client IP.
+    const decision = await authAj.protect(request, {});
+
+    if (decision.isDenied()) {
+      // Bot detection blocked this request
+      if (decision.reason.isBot()) {
+        return NextResponse.json(
+          { code: 403, message: "Forbidden" },
+          { status: 403 },
+        );
+      }
+
+      // Rate limit blocked this request
+      if (decision.reason.isRateLimit()) {
+        return NextResponse.json(
+          { code: 429, message: "Too Many Requests" },
+          {
+            status: 429,
+            headers: {
+              // Use `reset` — NOT `retryAfter`
+              "Retry-After": String(decision.reason.reset ?? 300),
+            },
+          },
+        );
+      }
+
+      // Shield or other rule blocked this request
+      return NextResponse.json(
+        { code: 403, message: "Forbidden" },
+        { status: 403 },
+      );
+    }
   }
 
   /*

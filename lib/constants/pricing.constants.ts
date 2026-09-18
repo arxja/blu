@@ -7,12 +7,15 @@ export const PLANS = [
     price: { monthly: 0 },
     stripePriceId: null,
     limits: {
-      monthlyTrackedUsers: 1000,
-      monthlyEvents: 100000,
+      monthlyTrackedUsers: 1_000,
+      monthlyEvents: 100_000,
       dataRetentionDays: 30,
-      apiRateLimit: 100,
       seats: 1,
       reports: 5,
+      dashboardRequestsPerMinPerUser: 100,
+      dashboardRequestsPerMinPerTenant: 100, // 1 seat → same as per-user
+      ingestionEventsPerSec: 50,
+      ingestionBurstEvents: 500, // 10× sustained,
     },
     features: [
       "1,000 monthly tracked users",
@@ -31,12 +34,15 @@ export const PLANS = [
     price: { monthly: 49 },
     stripePriceId: clientConfig.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID,
     limits: {
-      monthlyTrackedUsers: 10000,
-      monthlyEvents: 1000000,
+      monthlyTrackedUsers: 10_000,
+      monthlyEvents: 1_000_000,
       dataRetentionDays: 180,
-      apiRateLimit: 1000,
       seats: 10,
       reports: -1,
+      dashboardRequestsPerMinPerUser: 300,
+      dashboardRequestsPerMinPerTenant: 3_000, // 10 seats × 300 × 1.5 headroom
+      ingestionEventsPerSec: 500,
+      ingestionBurstEvents: 5_000,
     },
     features: [
       "10,000 monthly tracked users",
@@ -57,12 +63,15 @@ export const PLANS = [
     price: { monthly: 499 },
     stripePriceId: clientConfig.NEXT_PUBLIC_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
     limits: {
-      monthlyTrackedUsers: 100000,
-      monthlyEvents: 10000000,
+      monthlyTrackedUsers: 100_000,
+      monthlyEvents: 10_000_000,
       dataRetentionDays: 730,
-      apiRateLimit: 10000,
-      seats: -1,
+      seats: -1, // unlimited
       reports: -1,
+      dashboardRequestsPerMinPerUser: 1_000,
+      dashboardRequestsPerMinPerTenant: 30_000, // absolute cap, not seat-derived
+      ingestionEventsPerSec: 5_000,
+      ingestionBurstEvents: 50_000,
     },
     features: [
       "100,000+ monthly tracked users",
@@ -95,6 +104,10 @@ export const PLANS_BY_ID = PLANS.reduce(
 );
 
 // Lookup function
-export const getPlanById = (id: string): Plan | undefined => {
-  return PLANS_BY_ID[id as PlanId];
+export const getPlanById = (id: string): Plan => {
+  const plan = PLANS_BY_ID[id as PlanId];
+  if (!plan) {
+    throw new Error(`Unknown plan id: ${id}`);
+  }
+  return plan;
 };

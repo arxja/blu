@@ -28,11 +28,19 @@ const serverSchema = z.object({
   ARCJET_ENV: z.enum(["development", "staging", "production"]),
   UPSTASH_REDIS_REST_URL: z.string(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),
+  // Auth
+  AUTH_ATTEMPTS_PER_5_MIN: z.number().default(5),
+  AUTH_WINDOW: z.number().default(5 * 60 * 1000), // 5 minutes
   AUTH_COOKIE_DOMAIN: z.string().optional(),
   AUTH_COOKIE_SECURE: z
     .string()
     .default("false")
     .transform((v) => v === "true"),
+
+  // Reports
+  REPORT_BURST_CAPACITY: z.number().default(5),
+  REPORT_REFILL_RATE: z.number().default(1),
+  REPORT_REFILL_INTERVAL: z.number().default(10),
 });
 
 export type ServerConfig = z.infer<typeof serverSchema>;

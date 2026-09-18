@@ -7,6 +7,7 @@ import { TestimonialsSection } from "@/components/pages/home";
 
 export default function Home() {
   return (
+    // todo: redesign the UI
     <div>
       <HeroSection />
       <LogosSection />
