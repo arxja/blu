@@ -75,10 +75,10 @@ flowchart TB
 - [ ] Performance optimized (SSR/ISR)
 - [ ] Production logging & monitoring
 - [ ] Security best practices
-- [ ] Rate limiting & bot protection
+- [x] Rate limiting & bot protection
 - [ ] A/B testing framework
-- [ ] Define content for MCP and Skills
-- [ ] Implement a MCP server and publish Skills doc
+- [ ] Define content for Skills
+- [ ] Publish Skills
 
 ---
 
