@@ -64,9 +64,9 @@ async function handleCheckoutCompleted(event: WebhookEvent) {
   const priceId =
     session.metadata?.price_id || session.line_items?.data?.[0]?.price?.id;
   const planId =
-    priceId === process.env.STRIPE_PRO_MONTHLY_PRICE_ID
+    priceId === serverConfig.STRIPE_PRO_MONTHLY_PRICE_ID
       ? "pro"
-      : priceId === process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID
+      : priceId === serverConfig.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID
         ? "enterprise"
         : null;
 
@@ -98,7 +98,7 @@ async function handleCheckoutCompleted(event: WebhookEvent) {
   tenant.quotas = {
     monthlyEvents: plan.limits.monthlyEvents,
     retentionDays: plan.limits.dataRetentionDays,
-    apiRateLimit: plan.limits.apiRateLimit,
+    apiRateLimit: plan.limits.ingestionEventsPerSec,
     seats: plan.limits.seats === -1 ? 999999 : plan.limits.seats,
   };
   await tenant.save();
@@ -134,7 +134,7 @@ async function handleSubscriptionDeleted(event: WebhookEvent) {
   tenant.quotas = {
     monthlyEvents: freePlan.limits.monthlyEvents,
     retentionDays: freePlan.limits.dataRetentionDays,
-    apiRateLimit: freePlan.limits.apiRateLimit,
+    apiRateLimit: freePlan.limits.ingestionEventsPerSec,
     seats: freePlan.limits.seats,
   };
   await tenant.save();
@@ -179,15 +179,14 @@ async function handleSubscriptionUpdated(event: WebhookEvent) {
           : null;
     if (planId && planId !== tenant.plan) {
       const plan = getPlanById(planId);
-      if (plan) {
-        tenant.plan = planId;
-        tenant.quotas = {
-          monthlyEvents: plan.limits.monthlyEvents,
-          retentionDays: plan.limits.dataRetentionDays,
-          apiRateLimit: plan.limits.apiRateLimit,
-          seats: plan.limits.seats === -1 ? 999999 : plan.limits.seats,
-        };
-      }
+      // getPlanById throws for unknown ids; assign quotas from the plan
+      tenant.plan = planId;
+      tenant.quotas = {
+        monthlyEvents: plan.limits.monthlyEvents,
+        retentionDays: plan.limits.dataRetentionDays,
+        apiRateLimit: plan.limits.ingestionEventsPerSec,
+        seats: plan.limits.seats === -1 ? 999999 : plan.limits.seats,
+      };
     }
   }
 
