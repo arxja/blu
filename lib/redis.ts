@@ -10,6 +10,7 @@ export const redis = new Redis({
 // Cache TTls (seconds)
 export const CACHE_TTL = {
   TENANT: 60 * 60 * 24, // 24 hours
+  TENANT_PLAN: 60,
   USER_WORKSPACES: 60 * 5, // 5 minutes (frequent changes)
   MEMBERSHIP_CHECK: 60 * 10, // 10 minutes
 };
@@ -88,4 +89,15 @@ export async function invalidateMembershipCache(
   tenantId: string,
 ) {
   await redis.del(`membership:${userId}:${tenantId}`);
+}
+
+//---------- Tenant plan cache ----------
+
+export async function getCachedTenantPlan(tenantId: string) {
+  const key = `tenant:plan:${tenantId}`;
+  return await redis.get<{ plan: string }>(key);
+}
+
+export async function invalidateTenantPlan(tenantId: string) {
+  await redis.del(`tenant:plan:${tenantId}`);
 }
