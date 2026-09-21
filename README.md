@@ -73,7 +73,7 @@ flowchart TB
 - [ ] Real-time analytics dashboard
 - [x] Stripe webhook handling
 - [ ] Performance optimized (SSR/ISR)
-- [ ] Production logging & monitoring
+- [x] Production logging & monitoring
 - [ ] Security best practices
 - [x] Rate limiting & bot protection
 - [ ] A/B testing framework
@@ -85,7 +85,7 @@ flowchart TB
 ## 🚧 What's going to be implemented
 
 - [ ] Dynamic segmentation engine (real‑time based on behavioral criteria)
-- [ ] Dashboard: charts, funnels, and cohorts
+- [ ] analytic workspace: charts, funnels, and cohorts
 - [ ] Rule builder UI (drag‑and‑drop condition editor)
 - [ ] Action engine: full integration with feature flag system
 - [ ] Demo mode with seed data for easy testing
