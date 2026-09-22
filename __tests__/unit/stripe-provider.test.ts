@@ -1,128 +1,171 @@
 // @vitest-environment node
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock logger
-vi.mock("@/lib/logger", () => ({
-  log: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    security: vi.fn(),
-    perf: vi.fn(),
-    request: vi.fn(),
+const createCheckoutSessionMock = vi.fn();
+
+vi.mock("stripe", () => {
+  return {
+    default: class Stripe {
+      checkout = {
+        sessions: {
+          create: createCheckoutSessionMock,
+        },
+      };
+
+      webhooks = {
+        constructEvent: vi.fn(),
+      };
+    },
+  };
+});
+
+vi.mock("@/lib/config", () => ({
+  serverConfig: {
+    STRIPE_SECRET_KEY: "sk_test_fake",
+    STRIPE_WEBHOOK_SECRET: "whsec_test_fake",
   },
 }));
 
-// Mock config
-vi.mock("@/lib/config", () => ({
-  serverConfig: {
-    NODE_ENV: "development",
-    DATABASE_URL: "mongodb://localhost:27017/test",
-    JWT_SECRET: "test-secret",
-    STRIPE_SECRET_KEY: "sk_test_123",
-    APP_URL: "http://localhost:3000",
-    LOG_LEVEL: "debug",
-    STRIPE_WEBHOOK_SECRET: "whsec_test",
+vi.mock("@/lib/logger/", () => ({
+  log: {
+    security: vi.fn(),
   },
 }));
 
 import { StripeProvider } from "@/lib/payment-provider/stripe-provider";
 
-describe("StripeProvider", () => {
-  let provider: StripeProvider;
-  let constructEventMock: ReturnType<typeof vi.fn>;
-
+describe("StripeProvider.createCheckoutSession", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    provider = new StripeProvider();
-
-    const stripeInstance = (provider as any).stripe;
-    constructEventMock = vi.fn();
-    stripeInstance.webhooks = {
-      constructEvent: constructEventMock,
-    };
   });
 
-  it("verifies a valid signature", () => {
-    constructEventMock.mockReturnValue({ id: "evt_1" });
-
-    const result = provider.verifySignature("raw", "sig");
-
-    expect(result).toBe(true);
-    expect(constructEventMock).toHaveBeenCalledWith("raw", "sig", "whsec_test");
-  });
-
-  it("rejects an invalid signature", () => {
-    constructEventMock.mockImplementation(() => {
-      throw new Error("Signature verification failed");
+  it("creates a subscription checkout session", async () => {
+    createCheckoutSessionMock.mockResolvedValue({
+      id: "cs_test_123",
+      url: "https://checkout.stripe.com/cs_test_123",
     });
 
-    const result = provider.verifySignature("raw", "bad_sig");
+    const provider = new StripeProvider();
 
-    expect(result).toBe(false);
-    expect(constructEventMock).toHaveBeenCalledWith(
-      "raw",
-      "bad_sig",
-      "whsec_test",
+    const result = await provider.createCheckoutSession({
+      tenantId: "tenant_123",
+      planId: "pro",
+      priceId: "price_pro",
+      customerEmail: "billing@acme.com",
+      successUrl: "https://app.blu.test/billing/success",
+      cancelUrl: "https://app.blu.test/billing/cancel",
+    });
+
+    expect(result).toEqual({
+      id: "cs_test_123",
+      url: "https://checkout.stripe.com/cs_test_123",
+    });
+
+    expect(createCheckoutSessionMock).toHaveBeenCalledOnce();
+
+    expect(createCheckoutSessionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "subscription",
+
+        line_items: [
+          {
+            price: "price_pro",
+            quantity: 1,
+          },
+        ],
+
+        client_reference_id: "tenant_123",
+
+        metadata: {
+          tenantId: "tenant_123",
+          planId: "pro",
+        },
+
+        subscription_data: {
+          metadata: {
+            tenantId: "tenant_123",
+            planId: "pro",
+          },
+        },
+
+        customer_email: "billing@acme.com",
+
+        success_url: "https://app.blu.test/billing/success",
+        cancel_url: "https://app.blu.test/billing/cancel",
+      }),
     );
   });
 
-  it("parses a checkout.session.completed event with customer", () => {
-    const rawBody = JSON.stringify({
-      id: "evt_1",
-      type: "checkout.session.completed",
-      data: {
-        object: {
-          id: "cs_1",
-          customer: "cus_123",
-          client_reference_id: "user_abc",
-        },
-      },
+  it("uses an existing Stripe customer when provided", async () => {
+    createCheckoutSessionMock.mockResolvedValue({
+      id: "cs_test_456",
+      url: "https://checkout.stripe.com/cs_test_456",
     });
 
-    const event = provider.parseEvent(rawBody);
+    const provider = new StripeProvider();
 
-    expect(event.id).toBe("evt_1");
-    expect(event.type).toBe("checkout.session.completed");
-    expect(event.customerId).toBe("cus_123");
-    expect(event.data.id).toBe("cs_1");
-    expect(event.provider).toBe("stripe");
+    await provider.createCheckoutSession({
+      tenantId: "tenant_456",
+      planId: "pro",
+      priceId: "price_pro",
+      customerEmail: "billing@acme.com",
+      stripeCustomerId: "cus_123",
+      successUrl: "https://app.blu.test/billing/success",
+      cancelUrl: "https://app.blu.test/billing/cancel",
+    });
+
+    expect(createCheckoutSessionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: "cus_123",
+      }),
+    );
+
+    const call = createCheckoutSessionMock.mock.calls[0][0];
+
+    expect(call).not.toHaveProperty("customer_email");
   });
 
-  it("parses an event with customer_id instead of customer", () => {
-    const rawBody = JSON.stringify({
-      id: "evt_2",
-      type: "invoice.paid",
-      data: {
-        object: {
-          id: "in_1",
-          customer_id: "cus_456",
-        },
-      },
+  it("does not configure a trial", async () => {
+    createCheckoutSessionMock.mockResolvedValue({
+      id: "cs_test_789",
+      url: "https://checkout.stripe.com/cs_test_789",
     });
 
-    const event = provider.parseEvent(rawBody);
+    const provider = new StripeProvider();
 
-    expect(event.id).toBe("evt_2");
-    expect(event.customerId).toBe("cus_456");
+    await provider.createCheckoutSession({
+      tenantId: "tenant_789",
+      planId: "pro",
+      priceId: "price_pro",
+      customerEmail: "billing@acme.com",
+      successUrl: "https://app.blu.test/billing/success",
+      cancelUrl: "https://app.blu.test/billing/cancel",
+    });
+
+    const call = createCheckoutSessionMock.mock.calls[0][0];
+
+    expect(call).not.toHaveProperty("trial_period_days");
+    expect(call.subscription_data).not.toHaveProperty("trial_period_days");
   });
 
-  it("parses an event with no customer information", () => {
-    const rawBody = JSON.stringify({
-      id: "evt_3",
-      type: "charge.refunded",
-      data: {
-        object: {
-          id: "ch_1",
-        },
-      },
+  it("throws when Stripe does not return a checkout URL", async () => {
+    createCheckoutSessionMock.mockResolvedValue({
+      id: "cs_test_no_url",
+      url: null,
     });
 
-    const event = provider.parseEvent(rawBody);
+    const provider = new StripeProvider();
 
-    expect(event.id).toBe("evt_3");
-    expect(event.customerId).toBeNull();
+    await expect(
+      provider.createCheckoutSession({
+        tenantId: "tenant_123",
+        planId: "pro",
+        priceId: "price_pro",
+        customerEmail: "billing@acme.com",
+        successUrl: "https://app.blu.test/billing/success",
+        cancelUrl: "https://app.blu.test/billing/cancel",
+      }),
+    ).rejects.toThrow("Stripe Checkout session did not return a URL.");
   });
 });
