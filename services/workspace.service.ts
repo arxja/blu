@@ -52,7 +52,7 @@ export async function createWorkspace(
     );
   }
 
-  const tenantStatus = input.plan === "free" ? "active" : "trialing";
+  const tenantStatus = input.plan === "free" ? "active" : "pending_payment";
 
   const db = await connectDB();
 

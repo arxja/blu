@@ -105,7 +105,7 @@ function buildCreatedTenant(overrides: Record<string, unknown> = {}) {
   const plan = (overrides.plan as string | undefined) ?? "free";
   const status =
     (overrides.status as string | undefined) ??
-    (plan === "free" ? "active" : "trialing");
+    (plan === "free" ? "active" : "pending_payment");
 
   return {
     ...createdTenant,
@@ -382,7 +382,7 @@ describe("createWorkspace", () => {
     });
 
     expect(tenant.plan).toBe("pro");
-    expect(tenant.status).toBe("trialing");
+    expect(tenant.status).toBe("pending_payment");
     expect(tenant.quotas).toEqual({});
   });
 
