@@ -5,6 +5,7 @@ export type TenantPlan = (typeof TenantPlans)[number];
 
 export const TenantStatuses = [
   "active",
+  "pending_payment",
   "trialing",
   "past_due",
   "suspended",
