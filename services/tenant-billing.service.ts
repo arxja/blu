@@ -6,6 +6,17 @@ import { log } from "@/lib/logger";
 import { AppError } from "@/lib/errors";
 import { serverConfig } from "@/lib/config";
 import { getEmailService } from "@/lib/email";
+import mongoose from "mongoose";
+import { getPaymentProvider } from "@/lib/payment-provider";
+import { authorizeTenantAccess } from "@/lib/tenancy/tenant-access";
+import { requireMinimumRole } from "@/lib/tenancy/authorization";
+
+export interface CreateTenantCheckoutSessionInput {
+  userId: string;
+  tenantId: string;
+  successUrl: string;
+  cancelUrl: string;
+}
 
 export async function handleWebhookEvent(event: WebhookEvent) {
   if (await idempotencyStore.isProcessed(event.id)) {
@@ -255,6 +266,7 @@ async function handleInvoicePaid(event: WebhookEvent) {
     amount: invoice.amount_paid,
   });
 }
+
 async function handleInvoicePaymentFailed(event: WebhookEvent) {
   const invoice = event.data;
   const customerId = event.customerId || invoice.customer;
@@ -283,6 +295,7 @@ async function handleInvoicePaymentFailed(event: WebhookEvent) {
 
   log.warn("Invoice payment failed", { tenantId: tenant._id });
 }
+
 async function handleTrialWillEnd(event: WebhookEvent) {
   const subscription = event.data;
   const customerId = event.customerId || subscription.customer;
@@ -310,4 +323,90 @@ async function handleTrialWillEnd(event: WebhookEvent) {
       trialEndDate,
     );
   }
+}
+
+export async function createTenantCheckoutSession({
+  userId,
+  tenantId,
+  successUrl,
+  cancelUrl,
+}: CreateTenantCheckoutSessionInput) {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw AppError.badRequest("Invalid user id.");
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(tenantId)) {
+    throw AppError.badRequest("Invalid tenant id.");
+  }
+
+  const { tenant, membership } = await authorizeTenantAccess(userId, tenantId);
+
+  /*
+   * Billing changes are restricted to admins and owners.
+   */
+  requireMinimumRole(membership.role, "admin");
+
+  /*
+   * The initial checkout flow is only for Pro.
+   *
+   * Free requires no payment.
+   * Enterprise currently uses the sales flow.
+   */
+  if (tenant.plan === "free") {
+    throw AppError.badRequest("Free workspaces do not require payment.");
+  }
+
+  if (tenant.plan === "enterprise") {
+    throw AppError.badRequest(
+      "Enterprise workspaces require contacting sales.",
+    );
+  }
+
+  /*
+   * A Checkout Session is only valid for a tenant that is awaiting
+   * its initial payment.
+   *
+   * This prevents accidentally creating another subscription for an
+   * already-active tenant.
+   */
+  if (tenant.status !== "pending_payment") {
+    throw AppError.conflict("This workspace is not awaiting initial payment.");
+  }
+
+  const plan = getPlanById(tenant.plan);
+
+  if (!plan.stripePriceId) {
+    log.error(
+      "Stripe price is not configured for tenant plan",
+      new Error("Missing Stripe price ID"),
+      {
+        tenantId: tenant._id.toString(),
+        planId: tenant.plan,
+      },
+    );
+
+    throw new Error(
+      `Stripe price ID is not configured for plan "${tenant.plan}".`,
+    );
+  }
+
+  const provider = getPaymentProvider("stripe");
+
+  const session = await provider.createCheckoutSession({
+    tenantId: tenant._id.toString(),
+    planId: tenant.plan,
+    priceId: plan.stripePriceId,
+    customerEmail: tenant.billingEmail,
+    stripeCustomerId: tenant.stripeCustomerId,
+    successUrl,
+    cancelUrl,
+  });
+
+  log.info("Stripe Checkout session created", {
+    tenantId: tenant._id.toString(),
+    planId: tenant.plan,
+    sessionId: session.id,
+  });
+
+  return session;
 }
