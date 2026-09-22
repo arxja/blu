@@ -20,12 +20,22 @@ import {
  * Per-tenant quota overrides. All fields optional so the effective
  * value can be computed as `{ ...PlanQuotas[plan], ...tenant.quotas }`
  * in `lib/tenancy/quotas.ts`. NEVER read `tenant.quotas.x` directly.
+ *
+ * `pricing.constants.ts` is the source of truth for the current schema,
+ * while legacy names remain accepted for backwards compatibility.
  */
 export interface TenantQuotas {
   monthlyEvents?: number;
+  dataRetentionDays?: number;
   retentionDays?: number;
+  ingestionEventsPerSec?: number;
   apiRateLimit?: number;
   seats?: number;
+  monthlyTrackedUsers?: number;
+  reports?: number;
+  dashboardRequestsPerMinPerUser?: number;
+  dashboardRequestsPerMinPerTenant?: number;
+  ingestionBurstEvents?: number;
 }
 
 // ---- Plain shape ----
@@ -61,10 +71,17 @@ export type TenantDocument = HydratedDocument<Tenant>;
 
 const TenantQuotasSchema = new Schema<TenantQuotas>(
   {
-    monthlyEvents: { type: Number, min: 0 },
-    retentionDays: { type: Number, min: 0 },
-    apiRateLimit: { type: Number, min: 0 },
-    seats: { type: Number, min: 0 },
+    monthlyEvents: { type: Number, min: -1 },
+    dataRetentionDays: { type: Number, min: -1 },
+    retentionDays: { type: Number, min: -1 },
+    ingestionEventsPerSec: { type: Number, min: -1 },
+    apiRateLimit: { type: Number, min: -1 },
+    seats: { type: Number, min: -1 },
+    monthlyTrackedUsers: { type: Number, min: -1 },
+    reports: { type: Number, min: -1 },
+    dashboardRequestsPerMinPerUser: { type: Number, min: -1 },
+    dashboardRequestsPerMinPerTenant: { type: Number, min: -1 },
+    ingestionBurstEvents: { type: Number, min: -1 },
   },
   { _id: false },
 );

@@ -97,8 +97,8 @@ async function handleCheckoutCompleted(event: WebhookEvent) {
   tenant.stripeCustomerId = customerId;
   tenant.quotas = {
     monthlyEvents: plan.limits.monthlyEvents,
-    retentionDays: plan.limits.dataRetentionDays,
-    apiRateLimit: plan.limits.ingestionEventsPerSec,
+    dataRetentionDays: plan.limits.dataRetentionDays,
+    ingestionEventsPerSec: plan.limits.ingestionEventsPerSec,
     seats: plan.limits.seats === -1 ? 999999 : plan.limits.seats,
   };
   await tenant.save();
@@ -133,8 +133,8 @@ async function handleSubscriptionDeleted(event: WebhookEvent) {
   tenant.status = "suspended";
   tenant.quotas = {
     monthlyEvents: freePlan.limits.monthlyEvents,
-    retentionDays: freePlan.limits.dataRetentionDays,
-    apiRateLimit: freePlan.limits.ingestionEventsPerSec,
+    dataRetentionDays: freePlan.limits.dataRetentionDays,
+    ingestionEventsPerSec: freePlan.limits.ingestionEventsPerSec,
     seats: freePlan.limits.seats,
   };
   await tenant.save();
@@ -183,8 +183,8 @@ async function handleSubscriptionUpdated(event: WebhookEvent) {
       tenant.plan = planId;
       tenant.quotas = {
         monthlyEvents: plan.limits.monthlyEvents,
-        retentionDays: plan.limits.dataRetentionDays,
-        apiRateLimit: plan.limits.ingestionEventsPerSec,
+        dataRetentionDays: plan.limits.dataRetentionDays,
+        ingestionEventsPerSec: plan.limits.ingestionEventsPerSec,
         seats: plan.limits.seats === -1 ? 999999 : plan.limits.seats,
       };
     }

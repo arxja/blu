@@ -1,3 +1,5 @@
+import { PLANS } from "@/lib/constants";
+
 export const TenantPlans = ["free", "pro", "enterprise"] as const;
 export type TenantPlan = (typeof TenantPlans)[number];
 
@@ -9,32 +11,35 @@ export const TenantStatuses = [
 ] as const;
 export type TenantStatus = (typeof TenantStatuses)[number];
 
-// Default quotas per plan. Overridable per tenant via `Tenant.quotas`.
-export const PlanQuotas: Record<
-  TenantPlan,
-  {
-    monthlyEvents: number;
-    retentionDays: number;
-    apiRateLimit: number;
-    seats: number;
-  }
-> = {
-  free: {
-    monthlyEvents: 100_000,
-    retentionDays: 30,
-    apiRateLimit: 1_000,
-    seats: 1,
-  },
-  pro: {
-    monthlyEvents: 5_000_000,
-    retentionDays: 365,
-    apiRateLimit: 10_000,
-    seats: 10,
-  },
-  enterprise: {
-    monthlyEvents: 100_000_000,
-    retentionDays: 1095,
-    apiRateLimit: 100_000,
-    seats: 100,
-  },
+export type PlanLimitValues = {
+  monthlyEvents: number;
+  dataRetentionDays: number;
+  ingestionEventsPerSec: number;
+  seats: number;
+  monthlyTrackedUsers?: number;
+  reports?: number;
+  dashboardRequestsPerMinPerUser?: number;
+  dashboardRequestsPerMinPerTenant?: number;
+  ingestionBurstEvents?: number;
 };
+
+// Default quotas per plan. Overridable per tenant via `Tenant.quotas`.
+export const PlanQuotas: Record<TenantPlan, PlanLimitValues> =
+  Object.fromEntries(
+    PLANS.map((plan) => [
+      plan.id,
+      {
+        monthlyEvents: plan.limits.monthlyEvents,
+        dataRetentionDays: plan.limits.dataRetentionDays,
+        ingestionEventsPerSec: plan.limits.ingestionEventsPerSec,
+        seats: plan.limits.seats,
+        monthlyTrackedUsers: plan.limits.monthlyTrackedUsers,
+        reports: plan.limits.reports,
+        dashboardRequestsPerMinPerUser:
+          plan.limits.dashboardRequestsPerMinPerUser,
+        dashboardRequestsPerMinPerTenant:
+          plan.limits.dashboardRequestsPerMinPerTenant,
+        ingestionBurstEvents: plan.limits.ingestionBurstEvents,
+      },
+    ]),
+  ) as Record<TenantPlan, PlanLimitValues>;

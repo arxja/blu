@@ -65,7 +65,7 @@ export class QuotaService {
 
   async getApiRateLimit(): Promise<number> {
     const quotas = await this.getQuotas();
-    const limit = quotas.apiRateLimit;
+    const limit = quotas.ingestionEventsPerSec ?? quotas.apiRateLimit;
     return limit === UNLIMITED ? 10_000_000 : limit;
   }
 

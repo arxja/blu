@@ -3,9 +3,11 @@ import type { Tenant } from "@/lib/database/models/tenant.model";
 
 export type EffectiveQuotas = {
   monthlyEvents: number;
+  dataRetentionDays: number;
+  ingestionEventsPerSec: number;
+  seats: number;
   retentionDays: number;
   apiRateLimit: number;
-  seats: number;
 };
 
 /**
@@ -18,10 +20,23 @@ export function getEffectiveQuotas(
   const planDefaults = PlanQuotas[tenant.plan ?? "free"];
   const overrides = tenant.quotas ?? {};
 
+  const monthlyEvents = overrides.monthlyEvents ?? planDefaults.monthlyEvents;
+  const dataRetentionDays =
+    overrides.dataRetentionDays ??
+    overrides.retentionDays ??
+    planDefaults.dataRetentionDays;
+  const ingestionEventsPerSec =
+    overrides.ingestionEventsPerSec ??
+    overrides.apiRateLimit ??
+    planDefaults.ingestionEventsPerSec;
+  const seats = overrides.seats ?? planDefaults.seats;
+
   return {
-    monthlyEvents: overrides.monthlyEvents ?? planDefaults.monthlyEvents,
-    retentionDays: overrides.retentionDays ?? planDefaults.retentionDays,
-    apiRateLimit: overrides.apiRateLimit ?? planDefaults.apiRateLimit,
-    seats: overrides.seats ?? planDefaults.seats,
+    monthlyEvents,
+    dataRetentionDays,
+    ingestionEventsPerSec,
+    seats,
+    retentionDays: dataRetentionDays,
+    apiRateLimit: ingestionEventsPerSec,
   };
 }
