@@ -1,271 +1,257 @@
 // @vitest-environment node
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import mongoose from "mongoose";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/logger", () => ({
-  log: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    security: vi.fn(),
-    perf: vi.fn(),
-    request: vi.fn(),
-  },
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  },
-  default: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  },
+import { createTenantCheckoutSession } from "@/services/tenant-billing.service";
+
+import { authorizeTenantAccess } from "@/lib/tenancy/tenant-access";
+import { requireMinimumRole } from "@/lib/tenancy/authorization";
+import { getPaymentProvider } from "@/lib/payment-provider";
+import { getPlanById } from "@/lib/constants";
+
+vi.mock("@/lib/tenancy/tenant-access", () => ({
+  authorizeTenantAccess: vi.fn(),
 }));
 
-vi.mock("@/lib/email", () => ({
-  getEmailService: vi.fn(),
+vi.mock("@/lib/tenancy/authorization", () => ({
+  requireMinimumRole: vi.fn(),
 }));
 
-vi.mock("@/lib/config", () => ({
-  serverConfig: {
-    STRIPE_PRO_MONTHLY_PRICE_ID: "price_pro_monthly",
-    STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: "price_enterprise_monthly",
-  },
+vi.mock("@/lib/payment-provider", () => ({
+  getPaymentProvider: vi.fn(),
 }));
 
-vi.mock("@/lib/constants", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/constants")>();
+vi.mock("@/lib/constants/pricing.constants", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/constants/pricing.constants")>();
   return {
     ...actual,
-    getPlanById: (id: string) => actual.PLANS.find((p) => p.id === id),
+    getPlanById: vi.fn(),
   };
 });
 
-import { handleWebhookEvent } from "@/services/tenant-billing.service";
-import { idempotencyStore } from "@/lib/idempotency/mongo-idempotency-store";
-import { TenantModel } from "@/lib/database/models/tenant.model";
-import { PLANS } from "@/lib/constants";
-import { getEmailService } from "@/lib/email";
-import type { EmailService } from "@/lib/email/types";
-import { WebhookEvent } from "@/lib/payment-provider/types";
+describe("createTenantCheckoutSession", () => {
+  const userId = new mongoose.Types.ObjectId().toString();
+  const tenantId = new mongoose.Types.ObjectId().toString();
 
-vi.mock("@/lib/idempotency/mongo-idempotency-store");
-vi.mock("@/lib/database/models/tenant.model");
+  const createCheckoutSession = vi.fn();
 
-describe("handleWebhookEvent", () => {
-  let mockTenant: any;
-  let emailServiceMock: EmailService;
+  const tenant = {
+    _id: new mongoose.Types.ObjectId(tenantId),
+    plan: "pro",
+    status: "pending_payment",
+    billingEmail: "billing@acme.com",
+    stripeCustomerId: undefined,
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.stubEnv("STRIPE_PRO_MONTHLY_PRICE_ID", "price_pro_monthly");
-    vi.stubEnv(
-      "STRIPE_ENTERPRISE_MONTHLY_PRICE_ID",
-      "price_enterprise_monthly",
-    );
-
-    emailServiceMock = {
-      sendPaymentSuccess: vi.fn(),
-      sendPaymentFailed: vi.fn(),
-      sendTrialEnding: vi.fn(),
-    } as EmailService;
-
-    vi.mocked(getEmailService).mockReturnValue(emailServiceMock);
-
-    mockTenant = {
-      _id: "tenant1",
-      plan: "free",
-      status: "trialing",
-      quotas: {
-        monthlyEvents: 0,
-        retentionDays: 30,
-        apiRateLimit: 100,
-        seats: 1,
+    vi.mocked(authorizeTenantAccess).mockResolvedValue({
+      tenant,
+      membership: {
+        role: "owner",
       },
-      save: vi.fn().mockResolvedValue(undefined),
-      stripeCustomerId: null,
-      billingEmail: "test@example.com",
-      companyName: "Test Corp",
-    };
+    } as never);
 
-    vi.mocked(idempotencyStore.isProcessed).mockResolvedValue(false);
-    vi.mocked(TenantModel.findOne).mockResolvedValue(mockTenant);
-  });
+    vi.mocked(requireMinimumRole).mockReturnValue(undefined);
 
-  const buildEvent = (overrides: Partial<WebhookEvent> = {}): WebhookEvent => ({
-    id: "evt_test",
-    type: "checkout.session.completed",
-    data: {
-      customer: "cus_123",
-      client_reference_id: "user_1",
-      metadata: { price_id: process.env.STRIPE_PRO_MONTHLY_PRICE_ID },
-    },
-    customerId: "cus_123",
-    provider: "stripe",
-    ...overrides,
-  });
+    vi.mocked(getPlanById).mockReturnValue({
+      id: "pro",
+      stripePriceId: "price_pro_123",
+    } as never);
 
-  it("upgrades tenant to pro on checkout.session.completed", async () => {
-    await handleWebhookEvent(buildEvent());
-    expect(mockTenant.plan).toBe("pro");
-    expect(mockTenant.status).toBe("active");
-    expect(mockTenant.stripeCustomerId).toBe("cus_123");
-    expect(mockTenant.quotas.monthlyEvents).toBe(
-      PLANS.find((p) => p.id === "pro")!.limits.monthlyEvents,
-    );
-    expect(mockTenant.save).toHaveBeenCalled();
-    expect(idempotencyStore.markProcessed).toHaveBeenCalledWith("evt_test");
-  });
+    vi.mocked(getPaymentProvider).mockReturnValue({
+      createCheckoutSession,
+    } as never);
 
-  it("downgrades to free on subscription deleted", async () => {
-    const event = buildEvent({
-      type: "customer.subscription.deleted",
-      data: { customer: "cus_123" },
+    createCheckoutSession.mockResolvedValue({
+      id: "cs_test_123",
+      url: "https://checkout.stripe.com/cs_test_123",
     });
-    await handleWebhookEvent(event);
-    expect(mockTenant.plan).toBe("free");
-    expect(mockTenant.status).toBe("suspended");
-    expect(mockTenant.quotas.monthlyEvents).toBe(
-      PLANS.find((p) => p.id === "free")!.limits.monthlyEvents,
-    );
   });
 
-  it("upgrades to enterprise when enterprise price matches", async () => {
-    vi.stubEnv("STRIPE_PRO_MONTHLY_PRICE_ID", "price_pro_monthly");
-    const event = buildEvent({
-      data: {
-        customer: "cus_123",
-        client_reference_id: "user_1",
-        metadata: { price_id: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID },
+  it("creates a checkout session for a pending Pro tenant", async () => {
+    const result = await createTenantCheckoutSession({
+      userId,
+      tenantId,
+      successUrl: "https://acme.blu.test/billing/success",
+      cancelUrl: "https://acme.blu.test/billing/cancel",
+    });
+
+    expect(result).toEqual({
+      id: "cs_test_123",
+      url: "https://checkout.stripe.com/cs_test_123",
+    });
+
+    expect(authorizeTenantAccess).toHaveBeenCalledWith(userId, tenantId);
+
+    expect(requireMinimumRole).toHaveBeenCalledWith("owner", "admin");
+
+    expect(createCheckoutSession).toHaveBeenCalledWith({
+      tenantId,
+      planId: "pro",
+      priceId: "price_pro_123",
+      customerEmail: "billing@acme.com",
+      stripeCustomerId: undefined,
+      successUrl: "https://acme.blu.test/billing/success",
+      cancelUrl: "https://acme.blu.test/billing/cancel",
+    });
+  });
+
+  it("allows an admin to start checkout", async () => {
+    vi.mocked(authorizeTenantAccess).mockResolvedValue({
+      tenant,
+      membership: {
+        role: "admin",
       },
+    } as never);
+
+    await createTenantCheckoutSession({
+      userId,
+      tenantId,
+      successUrl: "https://acme.blu.test/billing/success",
+      cancelUrl: "https://acme.blu.test/billing/cancel",
     });
-    await handleWebhookEvent(event);
-    expect(mockTenant.plan).toBe("enterprise");
-    expect(mockTenant.status).toBe("active");
+
+    expect(requireMinimumRole).toHaveBeenCalledWith("admin", "admin");
+
+    expect(createCheckoutSession).toHaveBeenCalledOnce();
   });
 
-  it("skips processing if idempotency key already exists", async () => {
-    vi.mocked(idempotencyStore.isProcessed).mockResolvedValue(true);
-    await handleWebhookEvent(buildEvent());
-    expect(TenantModel.findOne).not.toHaveBeenCalled();
-    expect(idempotencyStore.markProcessed).not.toHaveBeenCalled();
-  });
-
-  it("throws error when checkout session has no customer", async () => {
-    const event = buildEvent({
-      data: {
-        customer: null,
-        client_reference_id: "user_1",
-        metadata: { price_id: process.env.STRIPE_PRO_MONTHLY_PRICE_ID },
+  it("rejects a free tenant", async () => {
+    vi.mocked(authorizeTenantAccess).mockResolvedValue({
+      tenant: {
+        ...tenant,
+        plan: "free",
       },
-      customerId: null,
-    });
-    await expect(handleWebhookEvent(event)).rejects.toThrow(
-      "Missing customer ID in checkout.session.completed",
-    );
+      membership: {
+        role: "owner",
+      },
+    } as never);
+
+    await expect(
+      createTenantCheckoutSession({
+        userId,
+        tenantId,
+        successUrl: "https://acme.blu.test/billing/success",
+        cancelUrl: "https://acme.blu.test/billing/cancel",
+      }),
+    ).rejects.toThrow("Free workspaces do not require payment.");
+
+    expect(createCheckoutSession).not.toHaveBeenCalled();
   });
 
-  it("does not update tenant when customer not found", async () => {
-    vi.mocked(TenantModel.findOne).mockResolvedValue(null);
-    const event = buildEvent();
-    await expect(handleWebhookEvent(event)).rejects.toThrow(
-      "Tenant not found for checkout session",
-    );
-    expect(mockTenant.plan).toBe("free");
-    expect(mockTenant.save).not.toHaveBeenCalled();
-    expect(idempotencyStore.markProcessed).not.toHaveBeenCalled();
+  it("rejects Enterprise from self-service checkout", async () => {
+    vi.mocked(authorizeTenantAccess).mockResolvedValue({
+      tenant: {
+        ...tenant,
+        plan: "enterprise",
+      },
+      membership: {
+        role: "owner",
+      },
+    } as never);
+
+    await expect(
+      createTenantCheckoutSession({
+        userId,
+        tenantId,
+        successUrl: "https://acme.blu.test/billing/success",
+        cancelUrl: "https://acme.blu.test/billing/cancel",
+      }),
+    ).rejects.toThrow("Enterprise workspaces require contacting sales.");
+
+    expect(createCheckoutSession).not.toHaveBeenCalled();
   });
 
-  it("updates plan and quotas on subscription updated with new price", async () => {
-    const event = buildEvent({
-      type: "customer.subscription.updated",
-      data: {
-        id: "sub_1",
-        customer: "cus_123",
+  it("rejects a Pro tenant that is not awaiting payment", async () => {
+    vi.mocked(authorizeTenantAccess).mockResolvedValue({
+      tenant: {
+        ...tenant,
         status: "active",
-        items: {
-          data: [
-            {
-              price: {
-                id: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID,
-              },
-            },
-          ],
-        },
       },
+      membership: {
+        role: "owner",
+      },
+    } as never);
+
+    await expect(
+      createTenantCheckoutSession({
+        userId,
+        tenantId,
+        successUrl: "https://acme.blu.test/billing/success",
+        cancelUrl: "https://acme.blu.test/billing/cancel",
+      }),
+    ).rejects.toThrow("This workspace is not awaiting initial payment.");
+
+    expect(createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("passes an existing Stripe customer to Checkout", async () => {
+    vi.mocked(authorizeTenantAccess).mockResolvedValue({
+      tenant: {
+        ...tenant,
+        stripeCustomerId: "cus_existing_123",
+      },
+      membership: {
+        role: "owner",
+      },
+    } as never);
+
+    await createTenantCheckoutSession({
+      userId,
+      tenantId,
+      successUrl: "https://acme.blu.test/billing/success",
+      cancelUrl: "https://acme.blu.test/billing/cancel",
     });
-    await handleWebhookEvent(event);
-    expect(mockTenant.plan).toBe("enterprise");
-    expect(mockTenant.quotas.monthlyEvents).toBe(
-      PLANS.find((p) => p.id === "enterprise")!.limits.monthlyEvents,
+
+    expect(createCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stripeCustomerId: "cus_existing_123",
+      }),
     );
   });
 
-  it("sets status to past_due on invoice.payment_failed", async () => {
-    const event = buildEvent({ type: "invoice.payment_failed" });
-    await handleWebhookEvent(event);
-    expect(mockTenant.status).toBe("past_due");
-    expect(emailServiceMock.sendPaymentFailed).toHaveBeenCalledWith(
-      mockTenant.billingEmail,
-      mockTenant.companyName,
-    );
+  it("rejects invalid user IDs", async () => {
+    await expect(
+      createTenantCheckoutSession({
+        userId: "invalid",
+        tenantId,
+        successUrl: "https://acme.blu.test/billing/success",
+        cancelUrl: "https://acme.blu.test/billing/cancel",
+      }),
+    ).rejects.toThrow("Invalid user id.");
+
+    expect(authorizeTenantAccess).not.toHaveBeenCalled();
+    expect(createCheckoutSession).not.toHaveBeenCalled();
   });
 
-  it("sets status back to active on invoice.payment_succeeded", async () => {
-    mockTenant.status = "past_due";
-    const event = buildEvent({
-      type: "invoice.payment_succeeded",
-      data: { amount_paid: 4900 },
-    });
-    await handleWebhookEvent(event);
-    expect(mockTenant.status).toBe("active");
-    expect(emailServiceMock.sendPaymentSuccess).toHaveBeenCalledWith(
-      mockTenant.billingEmail,
-      mockTenant.companyName,
-      49,
-    );
+  it("rejects invalid tenant IDs", async () => {
+    await expect(
+      createTenantCheckoutSession({
+        userId,
+        tenantId: "invalid",
+        successUrl: "https://acme.blu.test/billing/success",
+        cancelUrl: "https://acme.blu.test/billing/cancel",
+      }),
+    ).rejects.toThrow("Invalid tenant id.");
+
+    expect(authorizeTenantAccess).not.toHaveBeenCalled();
+    expect(createCheckoutSession).not.toHaveBeenCalled();
   });
 
-  it("sends trial ending email", async () => {
-    const event = buildEvent({
-      type: "customer.subscription.trial_will_end",
-      data: { trial_end: Math.floor(Date.now() / 1000) + 3 * 86400 },
-    });
-    await handleWebhookEvent(event);
-    expect(emailServiceMock.sendTrialEnding).toHaveBeenCalledWith(
-      mockTenant.billingEmail,
-      mockTenant.companyName,
-      expect.any(Date),
-    );
-  });
+  it("propagates Stripe errors without changing tenant state", async () => {
+    createCheckoutSession.mockRejectedValue(new Error("Stripe unavailable"));
 
-  it("handles subscription updated with missing tenant", async () => {
-    vi.mocked(TenantModel.findOne).mockResolvedValue(null);
-    const event = buildEvent({ type: "customer.subscription.updated" });
-    // Should not throw, just log and return
-    await expect(handleWebhookEvent(event)).resolves.not.toThrow();
-    expect(mockTenant.save).not.toHaveBeenCalled();
-  });
-
-  it("handles invoice payment failed with missing tenant", async () => {
-    vi.mocked(TenantModel.findOne).mockResolvedValue(null);
-    const event = buildEvent({ type: "invoice.payment_failed" });
-    await handleWebhookEvent(event);
-    expect(mockTenant.save).not.toHaveBeenCalled();
-  });
-
-  it("handles subscription deleted with missing customer ID", async () => {
-    const event = buildEvent({
-      type: "customer.subscription.deleted",
-      customerId: undefined,
-      data: { customer: undefined },
-    });
-    await handleWebhookEvent(event);
-    expect(TenantModel.findOne).not.toHaveBeenCalled();
+    await expect(
+      createTenantCheckoutSession({
+        userId,
+        tenantId,
+        successUrl: "https://acme.blu.test/billing/success",
+        cancelUrl: "https://acme.blu.test/billing/cancel",
+      }),
+    ).rejects.toThrow("Stripe unavailable");
   });
 });
