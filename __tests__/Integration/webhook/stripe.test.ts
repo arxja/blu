@@ -1,168 +1,227 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+// @vitest-environment node
 
-vi.mock("@/lib/config", () => ({
-  serverConfig: {
-    NODE_ENV: "test",
-    DATABASE_URL: "postgresql://test:test@localhost:5432/test",
-    JWT_SECRET: "test-secret",
-    STRIPE_SECRET_KEY: "sk_test_123",
-    STRIPE_PRO_MONTHLY_PRICE_ID: "price_pro_test",
-    STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: "price_enterprise_test",
-    APP_URL: "http://localhost:3000",
-    LOG_LEVEL: "debug",
-    STRIPE_WEBHOOK_SECRET: "whsec_test",
-  },
-  getServerConfig: () => ({
-    NODE_ENV: "test",
-    DATABASE_URL: "postgresql://test:test@localhost:5432/test",
-    JWT_SECRET: "test-secret",
-    STRIPE_SECRET_KEY: "sk_test_123",
-    STRIPE_PRO_MONTHLY_PRICE_ID: "price_pro_test",
-    STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: "price_enterprise_test",
-    APP_URL: "http://localhost:3000",
-    LOG_LEVEL: "debug",
-    STRIPE_WEBHOOK_SECRET: "whsec_test",
-  }),
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { NextRequest } from "next/server";
+
+const mocks = vi.hoisted(() => ({
+  verifySignature: vi.fn(),
+  parseEvent: vi.fn(),
+  enqueue: vi.fn(),
+  handleWebhookEvent: vi.fn(),
+  logSecurity: vi.fn(),
+  logInfo: vi.fn(),
+  logError: vi.fn(),
+  logPerf: vi.fn(),
 }));
 
+vi.mock("@/lib/payment-provider", () => ({
+  getPaymentProvider: vi.fn(() => ({
+    verifySignature: mocks.verifySignature,
+    parseEvent: mocks.parseEvent,
+  })),
+}));
 
-// Mock logger with all possible exports
+vi.mock("@/lib/queue/in-memory", () => ({
+  queue: {
+    enqueue: mocks.enqueue,
+  },
+}));
+
+vi.mock("@/services/tenant-billing.service", () => ({
+  handleWebhookEvent: mocks.handleWebhookEvent,
+}));
+
 vi.mock("@/lib/logger", () => ({
   log: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    security: vi.fn(),
-    perf: vi.fn(),
-    request: vi.fn(),
-  },
-  logger: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  },
-  default: {
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
+    security: mocks.logSecurity,
+    info: mocks.logInfo,
+    error: mocks.logError,
+    perf: mocks.logPerf,
   },
 }));
-
-// Import the modules you want to mock
-import { getPaymentProvider } from "@/lib/payment-provider";
-import { queue } from "@/lib/queue/in-memory";
-import { handleWebhookEvent } from "@/services/tenant-billing.service";
-
-// Mock the modules using the SAME path you import from
-vi.mock("@/lib/payment-provider");
-vi.mock("@/lib/queue/in-memory"); // Fixed: matches the import path
-vi.mock("@/services/tenant-billing.service");
 
 import { POST } from "@/app/api/webhooks/stripe/route";
 
-// Helper to create a mock Request
-function mockRequest(body: string, headers: Record<string, string>) {
-  return {
-    text: () => Promise.resolve(body),
+const stripeEvent = {
+  id: "evt_test_123",
+  type: "invoice.paid",
+  provider: "stripe",
+  customerId: "cus_test_123",
+  data: {
+    customer: "cus_test_123",
+    subscription: "sub_test_123",
+  },
+};
+
+function createRequest(
+  body = '{"id":"evt_test_123"}',
+  signature = "t=123,v1=test",
+): NextRequest {
+  return new Request("http://app.blu.test:3000/api/webhooks/stripe", {
+    method: "POST",
     headers: {
-      get: (name: string) => headers[name.toLowerCase()] || null,
+      "content-type": "application/json",
+      "stripe-signature": signature,
     },
-  } as any;
+    body,
+  }) as unknown as NextRequest;
 }
 
-describe("Stripe webhook route", () => {
-  const validBody = JSON.stringify({ id: "evt_1", type: "test" });
-  const validSignature = "t=123,v1=abc";
-
+describe("POST /api/webhooks/stripe", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mocks.verifySignature.mockReturnValue(true);
+    mocks.parseEvent.mockReturnValue(stripeEvent);
+
+    /*
+     * Simulate the in-memory queue actually executing its worker.
+     *
+     * This verifies that the route passes the parsed event into
+     * the billing handler, while still keeping Stripe itself mocked.
+     */
+    mocks.enqueue.mockImplementation(
+      async (
+        job: { id: string; event: typeof stripeEvent },
+        worker: (job: {
+          id: string;
+          event: typeof stripeEvent;
+        }) => Promise<void>,
+      ) => {
+        await worker(job);
+      },
+    );
+
+    mocks.handleWebhookEvent.mockResolvedValue(undefined);
   });
 
-  it("returns 400 if stripe-signature header missing", async () => {
-    const req = mockRequest(validBody, {});
-    const res = await POST(req);
-    expect(res.status).toBe(400);
-    const json = await res.json();
-    expect(json.error).toContain("Missing signature");
+  it("rejects requests without a Stripe signature", async () => {
+    const request = new Request(
+      "http://app.blu.test:3000/api/webhooks/stripe",
+      {
+        method: "POST",
+        body: '{"id":"evt_test_123"}',
+      },
+    ) as unknown as NextRequest;
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(400);
+
+    expect(await response.json()).toEqual({
+      error: "Missing signature",
+    });
+
+    expect(mocks.verifySignature).not.toHaveBeenCalled();
+    expect(mocks.parseEvent).not.toHaveBeenCalled();
+    expect(mocks.enqueue).not.toHaveBeenCalled();
   });
 
-  it("returns 401 if signature verification fails", async () => {
-    const mockProvider = {
-      verifySignature: () => false,
-      parseEvent: () => ({
-        id: "evt_1",
-        type: "test",
-        data: {},
-        customerId: null,
-        provider: "stripe",
-      }),
-    };
-    vi.mocked(getPaymentProvider).mockReturnValue(mockProvider);
+  it("rejects requests with an invalid Stripe signature", async () => {
+    mocks.verifySignature.mockReturnValue(false);
 
-    const req = mockRequest(validBody, { "stripe-signature": "bad" });
-    const res = await POST(req);
-    expect(res.status).toBe(401);
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(401);
+
+    expect(await response.json()).toEqual({
+      error: "Invalid signature",
+    });
+
+    expect(mocks.verifySignature).toHaveBeenCalledWith(
+      '{"id":"evt_test_123"}',
+      "t=123,v1=test",
+    );
+
+    expect(mocks.parseEvent).not.toHaveBeenCalled();
+    expect(mocks.enqueue).not.toHaveBeenCalled();
   });
 
-  it("returns 202 and enqueues job for valid signature", async () => {
-    const mockEvent = {
-      id: "evt_1",
-      type: "test",
-      data: {},
-      customerId: null,
-      provider: "stripe" as const,
-    };
+  it("accepts a valid Stripe webhook", async () => {
+    const response = await POST(createRequest());
 
-    const mockProvider = {
-      verifySignature: () => true,
-      parseEvent: () => mockEvent,
-    };
-    vi.mocked(getPaymentProvider).mockReturnValue(mockProvider);
+    expect(response.status).toBe(202);
 
-    const req = mockRequest(validBody, { "stripe-signature": validSignature });
-    const res = await POST(req);
+    expect(await response.json()).toEqual({
+      received: true,
+    });
 
-    expect(res.status).toBe(202);
-    const json = await res.json();
-    expect(json.received).toBe(true);
+    expect(mocks.verifySignature).toHaveBeenCalledWith(
+      '{"id":"evt_test_123"}',
+      "t=123,v1=test",
+    );
 
-    expect(vi.mocked(queue.enqueue)).toHaveBeenCalledTimes(1);
+    expect(mocks.parseEvent).toHaveBeenCalledWith('{"id":"evt_test_123"}');
 
-    // The enqueue callback should call handleWebhookEvent
-    const enqueueArgs = vi.mocked(queue.enqueue).mock.calls[0];
-    expect(enqueueArgs[0].id).toBe("evt_1");
+    expect(mocks.enqueue).toHaveBeenCalledOnce();
 
-    // Execute the handler callback to verify it calls business logic
-    await enqueueArgs[1](enqueueArgs[0]);
-    expect(handleWebhookEvent).toHaveBeenCalledWith(enqueueArgs[0].event);
+    expect(mocks.handleWebhookEvent).toHaveBeenCalledWith(stripeEvent);
   });
 
-  it("returns 500 if enqueue fails", async () => {
-    const mockEvent = {
-      id: "evt_1",
-      type: "test",
-      data: {},
-      customerId: null,
-      provider: "stripe" as const,
-    };
+  it("queues the parsed event using its Stripe event ID", async () => {
+    await POST(createRequest());
 
-    const mockProvider = {
-      verifySignature: () => true,
-      parseEvent: () => mockEvent,
-    };
-    vi.mocked(getPaymentProvider).mockReturnValue(mockProvider);
+    const [job] = mocks.enqueue.mock.calls[0];
 
-    // Use vi.mocked() to get the mock type
-    vi.mocked(queue.enqueue).mockRejectedValueOnce(new Error("Queue full"));
+    expect(job).toEqual({
+      id: "evt_test_123",
+      event: stripeEvent,
+    });
+  });
 
-    const req = mockRequest(validBody, { "stripe-signature": validSignature });
-    const res = await POST(req);
+  it("returns 500 when webhook queueing fails", async () => {
+    mocks.enqueue.mockRejectedValue(new Error("Queue unavailable"));
 
-    expect(res.status).toBe(500);
-    const json = await res.json();
-    expect(json.error).toBeDefined();
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(500);
+
+    expect(await response.json()).toEqual({
+      error: "Failed to queue webhook processing",
+    });
+
+    expect(mocks.handleWebhookEvent).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when event parsing fails", async () => {
+    mocks.parseEvent.mockImplementation(() => {
+      throw new Error("Invalid event payload");
+    });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(500);
+
+    expect(await response.json()).toEqual({
+      error: "Internal server error",
+    });
+
+    expect(mocks.enqueue).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when an unexpected route error occurs", async () => {
+    mocks.verifySignature.mockImplementation(() => {
+      throw new Error("Unexpected failure");
+    });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(500);
+
+    expect(await response.json()).toEqual({
+      error: "Internal server error",
+    });
+
+    expect(mocks.enqueue).not.toHaveBeenCalled();
+  });
+
+  it("does not process the webhook before signature verification", async () => {
+    mocks.verifySignature.mockReturnValue(false);
+
+    await POST(createRequest());
+
+    expect(mocks.parseEvent).not.toHaveBeenCalled();
+    expect(mocks.enqueue).not.toHaveBeenCalled();
+    expect(mocks.handleWebhookEvent).not.toHaveBeenCalled();
   });
 });
