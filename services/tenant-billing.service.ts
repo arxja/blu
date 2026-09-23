@@ -7,7 +7,7 @@ import { PLANS, getPlanById } from "@/lib/constants";
 import { log } from "@/lib/logger";
 import { AppError } from "@/lib/errors";
 import { getEmailService } from "@/lib/email";
-import { authorizeTenantAccess } from "@/lib/tenancy/tenant-access";
+import { authorizeTenantBillingAccess } from "@/lib/tenancy/tenant-access";
 import { requireMinimumRole } from "@/lib/tenancy/authorization";
 import { getPaymentProvider } from "@/lib/payment-provider";
 
@@ -34,7 +34,10 @@ export async function createTenantCheckoutSession({
     throw AppError.badRequest("Invalid tenant id.");
   }
 
-  const { tenant, membership } = await authorizeTenantAccess(userId, tenantId);
+  const { tenant, membership } = await authorizeTenantBillingAccess(
+    userId,
+    tenantId,
+  );
 
   requireMinimumRole(membership.role, "admin");
 
