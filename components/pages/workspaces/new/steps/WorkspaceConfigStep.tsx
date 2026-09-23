@@ -15,11 +15,13 @@ export default function WorkspaceConfigStep({ form }: Props) {
   } = form;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+    <section className="rounded-2xl border border-border-light bg-surface p-8 shadow-sm transition-colors duration-300">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold">Workspace configuration</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">
+          Workspace configuration
+        </h1>
 
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-text-tertiary">
           Configure the workspace owner and billing contact.
         </p>
       </div>
@@ -27,7 +29,7 @@ export default function WorkspaceConfigStep({ form }: Props) {
       <div>
         <label
           htmlFor="billingEmail"
-          className="mb-2 block text-sm font-medium"
+          className="mb-2 block text-sm font-medium text-text-secondary"
         >
           Billing email
         </label>
@@ -37,11 +39,11 @@ export default function WorkspaceConfigStep({ form }: Props) {
           type="email"
           {...register("billingEmail")}
           placeholder="billing@acme.com"
-          className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+          className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary outline-none transition-colors duration-200 placeholder:text-text-tertiary focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
         />
 
         {errors.billingEmail && (
-          <p className="mt-2 text-sm text-red-600">
+          <p className="mt-2 text-sm text-error">
             {errors.billingEmail.message}
           </p>
         )}
