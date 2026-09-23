@@ -5,10 +5,10 @@ interface HeaderProps {
 const Header = ({ username }: HeaderProps) => {
   return (
     <section>
-      <h1 className="text-2xl md:text-4xl font-bold">
+      <h1 className="text-2xl font-bold text-text-primary md:text-4xl">
         Welcome back, {username}.
       </h1>
-      <p className="text-gray-500 mt-2">
+      <p className="mt-2 text-sm text-text-tertiary md:text-base">
         Select a workspace to continue your projects or start something new.
       </p>
     </section>
