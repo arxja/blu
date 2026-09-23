@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { navigateTo } from "../workspace-navigation";
 
 import { createWorkspaceSchema } from "@/lib/validations/workspace";
 
@@ -122,7 +123,7 @@ export default function CreateWorkspaceWizard() {
     /*
      * Stripe is now taking over navigation.
      */
-    window.location.href = result.url;
+    navigateTo(result.url);
   };
 
   const submit = form.handleSubmit(async (data) => {
@@ -184,7 +185,9 @@ export default function CreateWorkspaceWizard() {
       if (data.plan === "free") {
         const subdomain = result.workspace.subdomain;
 
-        window.location.href = `${window.location.protocol}//${subdomain}.${getWorkspaceBaseDomain()}`;
+        navigateTo(
+          `${window.location.protocol}//${subdomain}.${getWorkspaceBaseDomain()}`,
+        );
 
         return;
       }
