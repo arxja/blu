@@ -95,4 +95,28 @@ describe("QuotaService", () => {
 
     expect(limit).toBe(10_000_000);
   });
+
+  it("supports the pricing limit schema keys for tenant overrides", async () => {
+    const tenantData = {
+      plan: "pro",
+      quotas: {
+        monthlyEvents: 4500,
+        dataRetentionDays: 120,
+        ingestionEventsPerSec: 250,
+        seats: 5,
+      },
+    };
+
+    vi.mocked(TenantModel.findById).mockReturnValue(
+      mockQueryWithLean(tenantData) as any,
+    );
+    vi.mocked(TenantUsageModel.findOne).mockReturnValue(
+      mockQueryWithLean({ count: 0 }) as any,
+    );
+
+    const service = new QuotaService(tenantId);
+
+    expect(await service.canTrackEvent(1)).toMatchObject({ allowed: true });
+    expect(await service.getApiRateLimit()).toBe(250);
+  });
 });

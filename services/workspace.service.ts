@@ -1,13 +1,17 @@
 import mongoose from "mongoose";
 import { MongoServerError } from "mongodb";
+
 import { connectDB } from "@/lib/database/mongoose";
-import { TenantModel } from "@/lib/database/models/tenant.model";
-import { MembershipModel } from "@/lib/database/models/membership.model";
+import Tenant from "@/lib/database/models/tenant.model";
+import Membership from "@/lib/database/models/membership.model";
+import DashboardUserModel from "@/lib/database/models/dashboard-user.model";
+
 import { AppError } from "@/lib/errors";
 import {
   createWorkspaceSchema,
   type CreateWorkspaceInput,
 } from "@/lib/validations/workspace";
+
 import { AuditActions } from "@/lib/audit/actions";
 import { invalidateUserWorkspacesCache } from "@/lib/redis";
 import { recordAuditEvent } from "@/services/audit.service";
@@ -35,6 +39,20 @@ export async function createWorkspace(
   }
 
   const input = parsed.data;
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  /*
+   * Enterprise is currently not a self-service provisioning path.
+   * The plan can be displayed in the wizard, but actual Enterprise
+   * provisioning will come through the future sales flow.
+   */
+  if (input.plan === "enterprise") {
+    throw AppError.badRequest(
+      "Enterprise workspaces require contacting sales.",
+    );
+  }
+
+  const tenantStatus = input.plan === "free" ? "active" : "pending_payment";
 
   const db = await connectDB();
 
@@ -44,12 +62,10 @@ export async function createWorkspace(
     tenant = await db.transaction(
       async (session) => {
         /*
-         * Friendly availability check.
-         *
-         * The unique index on Tenant.subdomain remains
-         * the authoritative concurrency guarantee.
+         * The subdomain is globally unique, so this check belongs
+         * inside the transaction as close as possible to creation.
          */
-        const existingTenant = await TenantModel.findOne({
+        const existingTenant = await Tenant.findOne({
           subdomain: input.subdomain,
         })
           .session(session)
@@ -59,33 +75,62 @@ export async function createWorkspace(
           throw AppError.conflict("This workspace subdomain is already taken.");
         }
 
-        const [createdTenant] = await TenantModel.create(
+        /*
+         * Free workspace allowance is an account-level rule.
+         * Paid workspaces do not consume it.
+         */
+        if (input.plan === "free") {
+          const dashboardUser = await DashboardUserModel.findById(userObjectId)
+            .select({ freeWorkspaceLimit: 1 })
+            .session(session)
+            .lean();
+
+          if (!dashboardUser) {
+            throw AppError.unauthorized();
+          }
+
+          /*
+           * Legacy users may not have the field persisted yet.
+           * Fall back to the current platform default.
+           */
+          const freeWorkspaceLimit = dashboardUser.freeWorkspaceLimit ?? 1;
+
+          const freeWorkspaceCount = await Tenant.countDocuments({
+            ownerId: userObjectId,
+            plan: "free",
+          }).session(session);
+
+          if (freeWorkspaceCount >= freeWorkspaceLimit) {
+            throw AppError.conflict(
+              "You have reached your free workspace limit.",
+            );
+          }
+        }
+
+        const [createdTenant] = await Tenant.create(
           [
             {
               companyName: input.companyName,
               subdomain: input.subdomain,
-              ownerId: new mongoose.Types.ObjectId(userId),
+              ownerId: userObjectId,
               activeMemberCount: 1,
-              logoUrl: input.logo || "",
-              plan: "free",
-              status: "trialing",
+              logoUrl: input.logo || undefined,
+              plan: input.plan,
+              status: tenantStatus,
               billingEmail: input.billingEmail,
+              quotas: {},
             },
           ],
           { session },
         );
 
-        await MembershipModel.create(
+        await Membership.create(
           [
             {
-              userId: new mongoose.Types.ObjectId(userId),
-
+              userId: userObjectId,
               tenantId: createdTenant._id,
-
               role: "owner",
-
               isActive: true,
-
               joinedAt: new Date(),
             },
           ],
@@ -99,11 +144,6 @@ export async function createWorkspace(
       },
     );
   } catch (error) {
-    /*
-     * Two concurrent workspace creations may both pass
-     * the availability query. MongoDB's unique index is
-     * the final source of truth.
-     */
     if (isDuplicateKeyError(error)) {
       throw AppError.conflict("This workspace subdomain is already taken.");
     }
@@ -112,12 +152,9 @@ export async function createWorkspace(
   }
 
   /*
-   * Everything below happens AFTER a successful commit.
-   *
-   * Audit/cache failures must not roll back an already
-   * created workspace.
+   * These are post-commit side effects.
+   * They must not roll back an already successful workspace creation.
    */
-
   try {
     await recordAuditEvent({
       tenantId: tenant._id,
@@ -127,6 +164,8 @@ export async function createWorkspace(
       resourceId: tenant._id,
       metadata: {
         subdomain: tenant.subdomain,
+        plan: tenant.plan,
+        status: tenant.status,
       },
     });
   } catch (error) {

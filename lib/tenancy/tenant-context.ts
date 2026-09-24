@@ -61,7 +61,7 @@ export async function getTenantContext(
   }
 
   if (tenant.status !== "active") {
-    throw AppError.forbidden("This workspace has been suspended.");
+    throw AppError.forbidden("This workspace is not currently active.");
   }
 
   const membership = await safeQueryResult(

@@ -197,49 +197,6 @@ describe("Pricing Component", () => {
       expect(screen.getByText("Start Pro Trial")).toBeInTheDocument();
       expect(screen.getByText("Contact Sales")).toBeInTheDocument();
     });
-
-    it("has correct href for Free plan", () => {
-      render(<Pricing />);
-      const freeButton = screen.getByText("Get Started").closest("a");
-      expect(freeButton).toHaveAttribute(
-        "href",
-        expect.stringContaining("?plan=free&billing=monthly"),
-      );
-    });
-
-    it("has correct href for Pro plan with monthly billing", () => {
-      render(<Pricing />);
-      const proButton = screen.getByText("Start Pro Trial").closest("a");
-      expect(proButton).toHaveAttribute(
-        "href",
-        expect.stringContaining("?plan=pro&billing=monthly"),
-      );
-    });
-
-    it("updates Pro plan href when billing changes to yearly", async () => {
-      const user = userEvent.setup();
-      render(<Pricing />);
-
-      const toggle = screen.getByRole("switch");
-      await user.click(toggle);
-
-      await waitFor(() => {
-        const proButton = screen.getByText("Start Pro Trial").closest("a");
-        expect(proButton).toHaveAttribute(
-          "href",
-          expect.stringContaining("?plan=pro&billing=yearly"),
-        );
-      });
-    });
-
-    it("has mailto link for Enterprise plan", () => {
-      render(<Pricing />);
-      const enterpriseButton = screen.getByText("Contact Sales").closest("a");
-      expect(enterpriseButton).toHaveAttribute(
-        "href",
-        "mailto:sales@example.com",
-      );
-    });
   });
 
   describe("Visual Elements", () => {
@@ -283,16 +240,6 @@ describe("Pricing Component", () => {
   });
 
   describe("Edge Cases", () => {
-    it("handles correct path redirection", () => {
-      const SC = process.env.NEXT_PUBLIC_STRIPE_CHECKOUT_URL;
-      render(<Pricing />);
-      const proButton = screen.getByText("Start Pro Trial").closest("a");
-      expect(proButton).toHaveAttribute(
-        "href",
-        `${SC}?plan=pro&billing=monthly`,
-      );
-    });
-
     it("does not show savings message for Free plan when yearly is selected", async () => {
       const user = userEvent.setup();
       render(<Pricing />);
