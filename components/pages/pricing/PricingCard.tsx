@@ -109,7 +109,7 @@ const PricingCard = ({
         </div>
 
         <Link
-          href={href}
+          href="/workspaces/new"
           className="block w-full py-3 px-4 rounded-xl text-center font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           style={{
             backgroundColor:
