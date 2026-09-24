@@ -23,7 +23,7 @@ export async function authorizeTenantAccess(userId: string, tenantId: string) {
   }
 
   if (tenant.status !== "active") {
-    throw AppError.forbidden("This workspace has been suspended.");
+    throw AppError.forbidden("This workspace is not currently active.");
   }
 
   const membership = await MembershipModel.findOne({
