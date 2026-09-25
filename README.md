@@ -7,7 +7,7 @@
 
 
 > [!WARNING]
->This project is **not yet production‑ready**, but the core infrastructure is taking shape.  
+>This project is **for educational purposes**.  
 > **Status: Development deferred**
 
 We’re building a complete data‑to‑action pipeline that combines:
@@ -104,7 +104,7 @@ flowchart TB
 | Real‑time         | Server‑Sent Events (SSE)          |
 | Deployment        | Vercel (serverless)               |
 | Authentication    | JWT (stateless)(for demo)         |
-| SDK               | TypeScript, React hooks, Node.js  |
+| SDK               | TypeScript, React hooks, Node.js, Fern, OpenAPI  |
 | Testing           | Cypress, Vitest                   |
 
 ---
