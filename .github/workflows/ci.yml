@@ -36,8 +36,10 @@ jobs:
         env:
           NODE_ENV: test
           CI: true
-          # Required server env vars (dummy values)
+          # Required server env vars (dummy values — validated for format only)
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          ANALYTICS_DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          ANALYTICS_DATABASE_POOL_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           JWT_SECRET: "dummy-jwt-secret-that-is-at-least-32-characters-long!!"
           STRIPE_SECRET_KEY: "sk_test_dummy_key_for_ci_test"
           APP_URL: "https://example.com"
@@ -48,13 +50,13 @@ jobs:
           STRIPE_WEBHOOK_SECRET: "whsec_dummy_webhook_secret"
           ARCJET_ENV: "development"
           ARCJET_KEY: "ajkey_dummy"
-          UPSTASH_REDIS_REST_URL: "upstash_dummy"
+          UPSTASH_REDIS_REST_URL: "https://upstash_dummy.io"
           UPSTASH_REDIS_REST_TOKEN: "upstash_dummy_token"
           AUTH_ATTEMPTS_PER_5_MIN: 5
           AUTH_WINDOW: 300000
           STRIPE_PRO_MONTHLY_PRICE_ID: "price_pro_monthly_dummy"
           STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: "price_enterprise_monthly_dummy"
-          # Client-side (needed if any client config is imported)
+          # Client-side
           NEXT_PUBLIC_APP_NAME: "My App"
           NEXT_PUBLIC_APP_BASE_DOMAIN: "example.com"
           NEXT_PUBLIC_API_URL: "/api"
@@ -95,8 +97,9 @@ jobs:
         env:
           NODE_ENV: production
           CI: true
-          # Required env vars
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          ANALYTICS_DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          ANALYTICS_DATABASE_POOL_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           JWT_SECRET: "dummy-jwt-secret-that-is-at-least-32-characters-long!!"
           STRIPE_SECRET_KEY: "sk_test_dummy_key_for_ci_build"
           APP_URL: "https://example.com"
@@ -106,14 +109,13 @@ jobs:
           LOG_LEVEL: "error"
           STRIPE_WEBHOOK_SECRET: "whsec_dummy_webhook_secret"
           ARCJET_ENV: "development"
-          ARCJET_KEY: ajkey_dummy
+          ARCJET_KEY: "ajkey_dummy"
           UPSTASH_REDIS_REST_URL: "https://upstash_dummy.io"
           UPSTASH_REDIS_REST_TOKEN: "upstash_dummy_token"
           AUTH_ATTEMPTS_PER_5_MIN: 5
           AUTH_WINDOW: 300000
           STRIPE_PRO_MONTHLY_PRICE_ID: "price_pro_monthly_dummy"
           STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: "price_enterprise_monthly_dummy"
-          # Client-side
           NEXT_PUBLIC_APP_NAME: "My App"
           NEXT_PUBLIC_APP_BASE_DOMAIN: "example.com"
           NEXT_PUBLIC_API_URL: "/api"
