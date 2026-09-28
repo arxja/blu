@@ -45,6 +45,11 @@ const serverSchema = z.object({
   REPORT_BURST_CAPACITY: z.number().default(5),
   REPORT_REFILL_RATE: z.number().default(1),
   REPORT_REFILL_INTERVAL: z.number().default(10),
+
+  // Analytic Database
+  ANALYTICS_DATABASE_URL: z.string().url(),
+  ANALYTICS_DATABASE_POOL_URL: z.string().url(),
+  TEST_ANALYTICS_DATABASE_URL: z.string().url().optional(),
 });
 
 export type ServerConfig = z.infer<typeof serverSchema>;
