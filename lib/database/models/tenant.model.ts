@@ -1,4 +1,3 @@
-// lib/database/models/tenant.model.ts
 import {
   Schema,
   model,
@@ -13,6 +12,7 @@ import {
   type TenantPlan,
   type TenantStatus,
 } from "@/lib/tenancy/plan";
+import { randomUUID } from "node:crypto";  // <-- Node 18+ only, but we require Node 20+ anyway
 
 // ---- Nested shapes ----
 
@@ -44,6 +44,7 @@ export interface Tenant {
   companyName: string;
   subdomain: string;
   ownerId: Types.ObjectId;
+  publicId: string; // UUIDv4, used in public URLs and API keys
 
   /**
    * Denormalized count of active memberships.
@@ -103,6 +104,13 @@ const TenantSchema = new Schema<Tenant>(
       type: Schema.Types.ObjectId,
       required: true,
       ref: "DashboardUser",
+    },
+    publicId: {
+      type: String,
+      required: true,
+      unique: true,
+      default: () => crypto.randomUUID(),
+      immutable: true,
     },
     activeMemberCount: { type: Number, default: 1, min: 1 },
     logoUrl: { type: String },
