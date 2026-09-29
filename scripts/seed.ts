@@ -13,13 +13,7 @@ import { getTenantUrl } from "@/lib/tenancy/hostname";
 import { ApiKeyModel } from "@/lib/database/models/apiKey.model";
 import { DashboardModel } from "@/lib/database/models/dashboard.model";
 import { DashboardUserModel } from "@/lib/database/models/dashboard-user.model";
-
-// ========== Helper: generate API keys ==========
-function generateApiKey() {
-  const prefix = crypto.randomBytes(8).toString("hex").slice(0, 8);
-  const hash = crypto.createHash("sha256").update(prefix).digest("hex");
-  return { prefix, hash };
-}
+import { generateApiKey } from "@/lib/api-keys/generate";
 
 // ========== Helper: random events ==========
 function generateRandomEvents(
@@ -236,16 +230,16 @@ async function seed() {
     {
       tenantId: tenant._id,
       name: "Production Key",
-      keyPrefix: prodKey.prefix,
-      keyHash: prodKey.hash,
+      keyPrefix: prodKey.keyPrefix,
+      keyHash: prodKey.keyHash,
       permissions: ["track", "identify", "query"],
       isActive: true,
     },
     {
       tenantId: tenant._id,
       name: "Staging Key",
-      keyPrefix: stagingKey.prefix,
-      keyHash: stagingKey.hash,
+      keyPrefix: stagingKey.keyPrefix,
+      keyHash: stagingKey.keyHash,
       permissions: ["track", "identify"],
       isActive: true,
     },

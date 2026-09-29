@@ -1,7 +1,7 @@
-import { PLANS } from "@/lib/constants";
+import { PLANS, type PlanId } from "@/lib/constants";
 
-export const TenantPlans = ["free", "pro", "enterprise"] as const;
-export type TenantPlan = (typeof TenantPlans)[number];
+export type TenantPlan = PlanId;
+export const TenantPlans: readonly TenantPlan[] = PLANS.map((p) => p.id);
 
 export const TenantStatuses = [
   "active",
