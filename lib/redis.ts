@@ -1,5 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { serverConfig } from "@/lib/config";
+import { IngestionContext } from "@/services/ingestion-auth.service";
 
 // Edge-compatible Redis client using Upstash REST API
 export const redis = new Redis({
@@ -13,6 +14,7 @@ export const CACHE_TTL = {
   TENANT_PLAN: 60,
   USER_WORKSPACES: 60 * 5, // 5 minutes (frequent changes)
   MEMBERSHIP_CHECK: 60 * 10, // 10 minutes
+  API_KEY: 60 * 10, // 10 minutes
 };
 
 // ---------- Tenant cache ----------
@@ -100,4 +102,23 @@ export async function getCachedTenantPlan(tenantId: string) {
 
 export async function invalidateTenantPlan(tenantId: string) {
   await redis.del(`tenant:plan:${tenantId}`);
+}
+
+// ---------- API key cache ----------
+export async function getCachedIngestionContext(
+  keyHash: string,
+): Promise<IngestionContext | null> {
+  const key = `ingestion:apikey:${keyHash}`;
+  return await redis.get<IngestionContext>(key);
+}
+
+export async function setCachedIngestionContext(
+  keyHash: string,
+  context: IngestionContext,
+): Promise<void> {
+  const key = `ingestion:apikey:${keyHash}`;
+  await redis.set(key, context, { ex: CACHE_TTL.API_KEY });
+}
+export async function invalidateApiKeyCache(keyHash: string) {
+  await redis.del(`api:key:${keyHash}`);
 }
