@@ -11,7 +11,13 @@ const nextConfig: NextConfig = {
 
   allowedDevOrigins: ["demo.blu.test", "app.blu.test"],
 
-  serverExternalPackages: ["pino", "pino-pretty"],
+  serverExternalPackages: [
+    "pino",
+    "pino-pretty",
+    "@arcjet/analyze-wasm",
+    "@arcjet/analyze",
+    "arcjet",
+  ],
 };
 
 export default nextConfig;
