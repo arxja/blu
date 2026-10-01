@@ -1,4 +1,10 @@
-import type { FooterGroup, NavItem, UserDropdownGroup } from "@/components/layout/types";
+import type {
+  FooterGroup,
+  NavItem,
+  UserDropdownGroup,
+  WorkspaceNavItem,
+} from "@/components/layout/types";
+import { BarChart3, LayoutDashboard, Settings, Users, Zap } from "lucide-react";
 
 export const NAVBAR_ITEMS: NavItem[] = [
   {
@@ -21,7 +27,7 @@ export const USER_DROPDOWN_ITEMS: UserDropdownGroup[] = [
     items: [
       {
         name: "dashboard",
-        link: "/dashboard"
+        link: "/dashboard",
       },
       {
         name: "settings",
@@ -30,18 +36,18 @@ export const USER_DROPDOWN_ITEMS: UserDropdownGroup[] = [
       {
         name: "invitations",
         link: "/invitations",
-      }
-    ]
+      },
+    ],
   },
   {
     groupName: "Workspace",
     items: [
       {
         name: "new",
-        link: "/workspaces/new"
-      }
-    ]
-  }
+        link: "/workspaces/new",
+      },
+    ],
+  },
 ];
 
 export const FOOTER_ITEMS: FooterGroup[] = [
@@ -80,6 +86,39 @@ export const FOOTER_ITEMS: FooterGroup[] = [
       { name: "Community", link: "#" },
       { name: "Security", link: "#" },
     ],
+  },
+];
+
+export const WORKSPACE_NAV: WorkspaceNavItem[] = [
+  {
+    label: "Overview",
+    href: "",
+    icon: LayoutDashboard,
+    match: "exact",
+  },
+  {
+    label: "Analytics",
+    href: "analytics",
+    icon: BarChart3,
+    match: "prefix",
+  },
+  {
+    label: "Actions",
+    href: "actions",
+    icon: Zap,
+    match: "prefix",
+  },
+  {
+    label: "Members",
+    href: "members",
+    icon: Users,
+    match: "prefix",
+  },
+  {
+    label: "Settings",
+    href: "settings",
+    icon: Settings,
+    match: "prefix",
   },
 ];
 

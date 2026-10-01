@@ -1,3 +1,4 @@
+import { WorkspaceSidebarShell } from "@/components/layout/sidebar/WorkspaceSidebarShell";
 import { getTenantContext } from "@/lib/tenancy/tenant-context";
 import { notFound } from "next/navigation";
 
@@ -20,5 +21,12 @@ export default async function TenantLayout({
     notFound();
   }
 
-  return children;
+  return (
+    <WorkspaceSidebarShell
+      subdomain={subdomain}
+      workspaceName={ctx.tenant.companyName}
+    >
+      {children}
+    </WorkspaceSidebarShell>
+  );
 }
