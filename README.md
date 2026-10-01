@@ -8,7 +8,7 @@
 
 > [!WARNING]
 >This project is **for educational purposes**.  
-> **Status: Development deferred**
+> **Status: Active Development**
 
 We’re building a complete data‑to‑action pipeline that combines:
 - Analytics (mixpanel‑like)  
