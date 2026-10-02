@@ -7,15 +7,13 @@
 
 
 > [!WARNING]
->This project is **for educational purposes**.  
-> **Status: Active Development**
+>This project is **Learning Artifact**.  
+>Currently the Track layer is complete and tested
 
 We’re building a complete data‑to‑action pipeline that combines:
 - Analytics (mixpanel‑like)  
 - Feature flags (launchdarkly‑like)  
 - Actions & integrations (hightouch‑like)  
-
-**Why you should star this repo** → Because this is the only open‑source platform that does all three in one, with a behavioral engine that auto‑enables features based on user activity.
 
 ---
 
@@ -72,11 +70,11 @@ flowchart TB
 - [x] Multi-tenant architecture (enterprise pattern)
 - [ ] Real-time analytics dashboard
 - [x] Stripe webhook handling
-- [ ] Performance optimized (SSR/ISR)
+- [x] Performance optimized (SSR/ISR)
 - [x] Production logging & monitoring
-- [ ] Security best practices
+- [x] Security best practices
 - [x] Rate limiting & bot protection
-- [ ] A/B testing framework
+- [x] A/B testing framework
 - [ ] Define content for Skills
 - [ ] Publish Skills
 
@@ -171,7 +169,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
-MIT © Blu Analytics
+MIT © Arash Jafari 2026
 
 ---
 
@@ -181,12 +179,3 @@ MIT © Blu Analytics
 - **SDKs:** [blu_sdk](https://github.com/arxja/blu_sdk)
 - **Documentation:** [docs.blu.dev](https://docs.blu.dev) (in progress)
 <!-- - **Community:** [Discord](https://discord.gg/blu) (join to follow progress) -->
-
----
-
-## ⭐ Why You Should Star This Repo
-
-- **Only open‑source platform combining analytics + flags + actions**
-- **Behavioral auto‑flags** – a feature not found in any competitor
-- **Clean, modern architecture** – learn from a real‑world SaaS codebase
-- **Active development** – we’re shipping fast and need early adopters
