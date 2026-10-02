@@ -3,7 +3,6 @@ import { db as defaultDb, type Db } from "../client";
 import { events } from "../schema";
 import type { EventInput, EventRow, InsertResult } from "../types";
 
-
 export function createEventsRepo(db: Db) {
   return {
     async insertBatch(
@@ -63,6 +62,15 @@ export function createEventsRepo(db: Db) {
         .from(events)
         .where(and(eq(events.tenantId, tenantId), eq(events.userId, userId)))
         .orderBy(desc(events.timestamp));
+    },
+
+    async deleteByTenant(tenantId: string): Promise<number> {
+      const deleted = await db
+        .delete(events)
+        .where(eq(events.tenantId, tenantId))
+        .returning({ eventId: events.eventId });
+
+      return deleted.length;
     },
   };
 }
