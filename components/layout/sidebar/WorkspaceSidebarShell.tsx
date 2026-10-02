@@ -13,7 +13,7 @@ export function WorkspaceSidebarShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen w-full bg-canvas">
+    <div className="flex h-screen w-full overflow-hidden bg-canvas">
       <WorkspaceSidebar subdomain={subdomain} workspaceName={workspaceName} />
 
       <div className="flex flex-1 flex-col overflow-hidden">

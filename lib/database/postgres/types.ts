@@ -15,3 +15,9 @@ export type EventInput = {
   properties?: Record<string, unknown>;
   context?: Record<string, unknown>;
 };
+
+// Analytics
+export interface EventsPerDay {
+  date: string,
+  count: number
+}

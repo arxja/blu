@@ -1,11 +1,10 @@
-import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { randomUUID } from "node:crypto";
 
-// Models
+// Mongo Models
 import { TenantModel } from "@/lib/database/models/tenant.model";
 import { MembershipModel } from "@/lib/database/models/membership.model";
-import Event from "@/lib/database/models/event.model";
 import { ReportModel } from "@/lib/database/models/report.model";
 import { InvitationModel } from "@/lib/database/models/invitation.model";
 import { connectDB } from "@/lib/database/mongoose";
@@ -15,50 +14,81 @@ import { DashboardModel } from "@/lib/database/models/dashboard.model";
 import { DashboardUserModel } from "@/lib/database/models/dashboard-user.model";
 import { generateApiKey } from "@/lib/api-keys/generate";
 
-// ========== Helper: random events ==========
-function generateRandomEvents(
-  tenantId: mongoose.Types.ObjectId,
-  count: number = 20,
-) {
-  const events = [];
+// Postgres (Drizzle) — direct client for wipe; repo for insertion
+import { db } from "@/lib/database/postgres/client";
+import { events } from "@/lib/database/postgres/schema";
+import { eventsRepo } from "@/lib/database/postgres/repositories/events.repo";
+import type { EventInput } from "@/lib/database/postgres/types";
+
+// ========== Helper: random Postgres events (wire shape) ==========
+//
+// Returns EventInput[] — the SDK wire shape. The repository's
+// insertBatch() maps it to the DB shape (event -> eventName,
+// ISO string -> Date, etc.).
+//
+// Timestamps are within the last 7 days to respect the free tier
+// retention window and stay inside the timestamp validation rules.
+
+function generateRandomPostgresEvents(count: number = 25): EventInput[] {
+  const rows: EventInput[] = [];
   const now = new Date();
+
   const userIds = ["user_001", "user_002", "user_003"];
+  const groupIds = ["group_alpha", "group_beta"];
   const eventNames = ["page_view", "signup", "purchase", "click_button"];
+  const browsers = ["Chrome", "Firefox"];
 
   for (let i = 0; i < count; i++) {
     const daysAgo = Math.floor(Math.random() * 7);
-    const date = new Date(now);
-    date.setDate(date.getDate() - daysAgo);
-    date.setHours(
+    const timestamp = new Date(now);
+    timestamp.setDate(timestamp.getDate() - daysAgo);
+    timestamp.setHours(
       Math.floor(Math.random() * 24),
       Math.floor(Math.random() * 60),
       0,
       0,
     );
 
-    const eventName = eventNames[Math.floor(Math.random() * eventNames.length)];
-    const userId = userIds[Math.floor(Math.random() * userIds.length)];
+    const event = eventNames[Math.floor(Math.random() * eventNames.length)];
+    const browser = browsers[Math.floor(Math.random() * browsers.length)];
 
-    events.push({
-      tenantId,
+    // ~25% anonymous-only (pre-login), rest identified.
+    const isAnonymous = Math.random() < 0.25;
+    const userId = isAnonymous
+      ? undefined
+      : userIds[Math.floor(Math.random() * userIds.length)];
+    const anonymousId = isAnonymous
+      ? `anon_${Math.random().toString(36).substring(2, 9)}`
+      : undefined;
+
+    const groupId =
+      Math.random() < 0.3
+        ? groupIds[Math.floor(Math.random() * groupIds.length)]
+        : undefined;
+
+    rows.push({
+      eventId: randomUUID(),
+      event,
       userId,
-      anonymousId: `anon_${Math.random().toString(36).substring(7)}`,
-      sessionId: `session_${Math.random().toString(36).substring(7)}`,
-      eventName,
+      anonymousId,
+      groupId,
+      timestamp: timestamp.toISOString(),
       properties: {
-        url: eventName === "purchase" ? "/checkout/success" : "/",
-        price:
-          eventName === "purchase"
-            ? Math.floor(Math.random() * 200) + 10
-            : undefined,
-        browser: ["Chrome", "Firefox"][Math.floor(Math.random() * 2)],
+        url: event === "purchase" ? "/checkout/success" : "/",
+        ...(event === "purchase" && {
+          price: Math.floor(Math.random() * 200) + 10,
+        }),
       },
-      timestamp: date,
-      ingestedAt: new Date(),
+      context: {
+        browser,
+        sessionId: `session_${Math.random().toString(36).substring(2, 9)}`,
+      },
     });
   }
-  return events;
+
+  return rows;
 }
+
 // ========== Main seed ==========
 async function seed() {
   if (process.env.NODE_ENV !== "development") {
@@ -66,6 +96,7 @@ async function seed() {
     process.exit(1);
   }
 
+  // MongoDB connection
   try {
     await connectDB();
     console.log("📦 Connected to MongoDB");
@@ -92,17 +123,17 @@ async function seed() {
     process.exit(1);
   }
 
-  // 1. Clear all collections
+  // 1. Clear all collections + Postgres events table
   console.log("🧹 Clearing existing data...");
   await Promise.all([
     TenantModel.deleteMany({}),
     DashboardUserModel.deleteMany({}),
     MembershipModel.deleteMany({}),
     ApiKeyModel.deleteMany({}),
-    Event.deleteMany({}),
     DashboardModel.deleteMany({}),
     ReportModel.deleteMany({}),
     InvitationModel.deleteMany({}),
+    db.delete(events),
   ]);
   console.log("✅ Cleared\n");
 
@@ -165,7 +196,7 @@ async function seed() {
     `🏢 Created tenant: ${tenant.companyName} (${tenant.subdomain}.localhost:3000)`,
   );
 
-  // 3b. Create a second workspace with a single user for membership testing
+  // 3b. Second workspace with a single user for membership testing
   const soloTenant = await TenantModel.create({
     companyName: "Membership Test Workspace",
     subdomain: "membership-test",
@@ -186,7 +217,7 @@ async function seed() {
     `🏢 Created tenant: ${soloTenant.companyName} (${soloTenant.subdomain}.localhost:3000)`,
   );
 
-  // 4. Create memberships (user -> tenant + role)
+  // 4. Memberships (user -> tenant + role)
   await MembershipModel.create([
     {
       userId: ownerUser._id,
@@ -246,10 +277,14 @@ async function seed() {
   ]);
   console.log("🔑 Created 2 API keys");
 
-  // 6. Events
-  const events = generateRandomEvents(tenant._id, 25);
-  await Event.insertMany(events);
-  console.log(`📊 Created ${events.length} random events`);
+  // 6. Events (Postgres)
+  //
+  // Use tenant.publicId (the UUID added in Phase 3.5) — NOT
+  // tenant._id (a Mongo ObjectId string, which Postgres will
+  // reject since the column is uuid).
+  const eventRows = generateRandomPostgresEvents(25);
+  const insertResult = await eventsRepo.insertBatch(tenant.publicId, eventRows);
+  console.log(`📊 Created ${insertResult.inserted} random events (Postgres)`);
 
   // 7. Dashboards (using owner as creator)
   await DashboardModel.create([
@@ -340,6 +375,9 @@ async function seed() {
   console.log("\n🌐 Workspace URLs:");
   console.log(`   ${getTenantUrl(tenant.subdomain)}`);
   console.log(`   ${getTenantUrl(soloTenant.subdomain)}`);
+  console.log("\n🔑 API Keys (save these, shown once):");
+  console.log(`   Production: ${prodKey.fullKey}`);
+  console.log(`   Staging:    ${stagingKey.fullKey}`);
   console.log(
     "\n💡 Tip: Use the subdomain to test multi‑workspace isolation and membership logic.",
   );
